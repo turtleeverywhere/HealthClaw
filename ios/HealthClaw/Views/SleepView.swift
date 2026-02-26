@@ -5,16 +5,23 @@ struct SleepView: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            ScrollView {
                 if healthManager.recentSleep.isEmpty {
                     ContentUnavailableView("No Sleep Data", systemImage: "bed.double", description: Text("Sleep sessions will appear here"))
+                        .padding(.top, 60)
                 } else {
-                    ForEach(Array(healthManager.recentSleep.enumerated()), id: \.offset) { _, session in
-                        SleepRow(session: session)
+                    VStack(spacing: 12) {
+                        ForEach(Array(healthManager.recentSleep.enumerated()), id: \.offset) { _, session in
+                            SleepRow(session: session)
+                        }
                     }
+                    .padding()
                 }
             }
+            .background(Color.appBackground.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
             .navigationTitle("Sleep")
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable {
                 await healthManager.refreshDashboard()
             }
@@ -26,17 +33,19 @@ struct SleepRow: View {
     let session: SleepSession
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(session.start, format: .dateTime.weekday(.wide).month().day())
                     .font(.headline)
                 Spacer()
-                Text(String(format: "%.1fh", session.totalDurationMin / 60.0))
+                let hours = session.totalDurationMin / 60.0
+                Text(String(format: "%.0fh %02.0fm", hours.rounded(.down), session.totalDurationMin.truncatingRemainder(dividingBy: 60)))
                     .font(.title3.bold())
                     .foregroundStyle(.indigo)
             }
+
             HStack {
-                Text("\(session.start, format: .dateTime.hour().minute()) → \(session.end, format: .dateTime.hour().minute())")
+                Text("\(session.start, format: .dateTime.hour().minute()) \u{2192} \(session.end, format: .dateTime.hour().minute())")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -44,50 +53,39 @@ struct SleepRow: View {
             // Stage bar
             let total = session.totalDurationMin
             if total > 0 {
-                GeometryReader { geo in
-                    HStack(spacing: 1) {
-                        ForEach(Array(session.stages.enumerated()), id: \.offset) { _, stage in
-                            Rectangle()
-                                .fill(stageColor(stage.stage))
-                                .frame(width: max(2, geo.size.width * stage.durationMin / total))
-                        }
-                    }
-                }
-                .frame(height: 12)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                let stageFractions = session.stages.map { (stage: $0.stage, fraction: $0.durationMin / total) }
+                SleepStageBar(stages: stageFractions)
+                    .frame(height: 12)
             }
 
-            // Legend
-            HStack(spacing: 12) {
-                StageLegend(label: "Deep", color: .indigo)
-                StageLegend(label: "REM", color: .cyan)
-                StageLegend(label: "Core", color: .blue)
-                StageLegend(label: "Awake", color: .gray)
+            // Stage breakdown
+            let deep = session.stages.filter { $0.stage == "deep" }.reduce(0) { $0 + $1.durationMin }
+            let rem = session.stages.filter { $0.stage == "rem" }.reduce(0) { $0 + $1.durationMin }
+            let core = session.stages.filter { $0.stage == "core" }.reduce(0) { $0 + $1.durationMin }
+            let awake = session.stages.filter { $0.stage == "awake" }.reduce(0) { $0 + $1.durationMin }
+
+            HStack(spacing: 16) {
+                StageLegendItem(label: "Deep", minutes: deep, color: .indigo)
+                StageLegendItem(label: "REM", minutes: rem, color: .cyan)
+                StageLegendItem(label: "Core", minutes: core, color: .blue)
+                StageLegendItem(label: "Awake", minutes: awake, color: .gray)
             }
             .font(.caption2)
         }
-        .padding(.vertical, 4)
-    }
-
-    func stageColor(_ stage: String) -> Color {
-        switch stage {
-        case "deep": return .indigo
-        case "rem": return .cyan
-        case "core": return .blue
-        case "awake": return .gray
-        default: return .secondary
-        }
+        .cardStyle()
     }
 }
 
-struct StageLegend: View {
+struct StageLegendItem: View {
     let label: String
+    let minutes: Double
     let color: Color
 
     var body: some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 6, height: 6)
-            Text(label).foregroundStyle(.secondary)
+            Text("\(label) \(String(format: "%.0fm", minutes))")
+                .foregroundStyle(.secondary)
         }
     }
 }

@@ -1,6 +1,14 @@
 import Foundation
 import HealthKit
 import UIKit
+import CoreLocation
+import WidgetKit
+
+struct DailyMetric: Identifiable {
+    let id = UUID()
+    let date: Date
+    let value: Double
+}
 
 @MainActor
 class HealthKitManager: ObservableObject {
@@ -12,7 +20,19 @@ class HealthKitManager: ObservableObject {
     @Published var recentSleep: [SleepSession] = []
     @Published var recentWorkouts: [WorkoutSession] = []
     @Published var bodyData: BodyData?
+    @Published var vitalsData: VitalsData?
     @Published var bodyBattery: Int?
+
+    // Historical data for sparklines
+    @Published var historicalWeight: [DailyMetric] = []
+    @Published var historicalHRV: [DailyMetric] = []
+    @Published var historicalRHR: [DailyMetric] = []
+    @Published var historicalBodyFat: [DailyMetric] = []
+    @Published var historicalSteps: [DailyMetric] = []
+
+    // Workout route data
+    @Published var workoutRoutes: [String: [CLLocationCoordinate2D]] = [:]
+    private var hkWorkoutCache: [String: HKWorkout] = [:]
 
     // All quantity types we want to read
     private var quantityTypes: Set<HKQuantityType> {
@@ -43,7 +63,7 @@ class HealthKitManager: ObservableObject {
         types.formUnion(quantityTypes)
         types.formUnion(categoryTypes)
         types.insert(HKObjectType.workoutType())
-        // State of Mind (iOS 18+)
+        types.insert(HKSeriesType.workoutRoute())
         if #available(iOS 18.0, *) {
             types.insert(HKObjectType.stateOfMindType())
         }
@@ -99,21 +119,79 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Refresh dashboard data
 
+    /// Convenience: refresh with today's data (used by Sleep/Workouts tabs)
     func refreshDashboard() async {
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: startOfDay)!
+        await refreshData(from: startOfDay, to: now)
+    }
 
-        todayActivity = await fetchActivity(from: startOfDay, to: now)
-        todayHeart = await fetchHeart(from: startOfDay, to: now)
-        recentSleep = await fetchSleep(from: yesterday, to: now)
-        recentWorkouts = await fetchWorkouts(from: Calendar.current.date(byAdding: .day, value: -7, to: now)!, to: now)
-        bodyData = await fetchBody(from: Calendar.current.date(byAdding: .day, value: -30, to: now)!, to: now)
+    /// Refresh all data for a given date range
+    func refreshData(from start: Date, to end: Date) async {
+        let cal = Calendar.current
+        let sleepFrom = cal.date(byAdding: .day, value: -1, to: start)!
+        // Infrequent metrics need wider lookback
+        let bodyLookback = cal.date(byAdding: .day, value: -90, to: end)!
+
+        // Period data
+        async let a = fetchActivity(from: start, to: end)
+        async let h = fetchHeart(from: start, to: end)
+        async let s = fetchSleep(from: sleepFrom, to: end)
+        async let w = fetchWorkouts(from: start, to: end)
+        async let b = fetchBody(from: bodyLookback, to: end)
+        async let v = fetchVitals(from: bodyLookback, to: end)
+
+        // Sparkline lookback: proportional to selected period, min 14 days
+        let periodDays = max(cal.dateComponents([.day], from: start, to: end).day ?? 1, 1)
+        let sparkDays = max(periodDays * 3, 14)
+        let sparkStart = cal.date(byAdding: .day, value: -sparkDays, to: end)!
+
+        async let hWeight = fetchDailySamples(.bodyMass, unit: .gramUnit(with: .kilo), from: sparkStart, to: end, options: .discreteAverage)
+        async let hHRV = fetchDailySamples(.heartRateVariabilitySDNN, unit: .secondUnit(with: .milli), from: sparkStart, to: end, options: .discreteAverage)
+        async let hRHR = fetchDailySamples(.restingHeartRate, unit: HKUnit(from: "count/min"), from: sparkStart, to: end, options: .discreteAverage)
+        async let hBF = fetchDailySamples(.bodyFatPercentage, unit: .percent(), from: sparkStart, to: end, options: .discreteAverage)
+        async let hSteps = fetchDailySamples(.stepCount, unit: .count(), from: sparkStart, to: end, options: .cumulativeSum)
+
+        todayActivity = await a
+        todayHeart = await h
+        recentSleep = await s
+        recentWorkouts = await w
+        bodyData = await b
+        vitalsData = await v
+
+        historicalWeight = await hWeight
+        historicalHRV = await hHRV
+        historicalRHR = await hRHR
+        historicalBodyFat = (await hBF).map { DailyMetric(date: $0.date, value: $0.value * 100) }
+        historicalSteps = await hSteps
+
         bodyBattery = computeBodyBattery(
             hrv: todayHeart?.hrvSdnn,
             sleepMin: recentSleep.first?.totalDurationMin,
             steps: todayActivity?.steps
         )
+
+        cacheWidgetData()
+    }
+
+    private func cacheWidgetData() {
+        let data = WidgetData(
+            updatedAt: Date(),
+            steps: todayActivity?.steps,
+            activeCalories: todayActivity?.activeCalories,
+            exerciseMinutes: todayActivity?.exerciseMinutes,
+            distanceKm: todayActivity?.distanceKm,
+            bodyBattery: bodyBattery,
+            restingHR: todayHeart?.restingHr,
+            hrv: todayHeart?.hrvSdnn,
+            vo2Max: todayActivity?.vo2Max,
+            sleepMinutes: recentSleep.first?.totalDurationMin,
+            weightKg: bodyData?.weightKg,
+            lastWorkoutType: recentWorkouts.first?.workoutType,
+            lastWorkoutDurationMin: recentWorkouts.first?.durationMin
+        )
+        WidgetDataCache.save(data)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - Activity
@@ -128,7 +206,9 @@ class HealthKitManager: ObservableObject {
         data.basalCalories = await sumQuantity(.basalEnergyBurned, unit: .kilocalorie(), from: start, to: end)
         data.exerciseMinutes = await sumQuantity(.appleExerciseTime, unit: .minute(), from: start, to: end)
         data.flightsClimbed = Int(await sumQuantity(.flightsClimbed, unit: .count(), from: start, to: end))
-        data.vo2Max = await latestQuantity(.vo2Max, unit: HKUnit(from: "ml/kg*min"), from: start, to: end)
+        // VO2 Max updates infrequently — use wider lookback
+        let vo2Start = Calendar.current.date(byAdding: .day, value: -90, to: end) ?? start
+        data.vo2Max = await latestQuantity(.vo2Max, unit: HKUnit(from: "ml/kg*min"), from: vo2Start, to: end)
         let speedMs = await avgQuantity(.walkingSpeed, unit: HKUnit(from: "m/s"), from: start, to: end)
         data.walkingSpeedKmh = speedMs.map { $0 * 3.6 }
         return data
@@ -218,20 +298,21 @@ class HealthKitManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
-        return await withCheckedContinuation { continuation in
+        let (sessions, cache) = await withCheckedContinuation { (continuation: CheckedContinuation<([WorkoutSession], [String: HKWorkout]), Never>) in
             let query = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: 50, sortDescriptors: [sortDescriptor]) { _, samples, _ in
                 guard let workouts = samples as? [HKWorkout] else {
-                    continuation.resume(returning: [])
+                    continuation.resume(returning: ([], [:]))
                     return
                 }
 
+                var cacheMap: [String: HKWorkout] = [:]
                 let sessions = workouts.map { w -> WorkoutSession in
                     let typeName = w.workoutActivityType.displayName
                     let dur = w.duration / 60.0
                     let dist = w.totalDistance.map { $0.doubleValue(for: .meter()) / 1000.0 }
                     let cal = w.totalEnergyBurned?.doubleValue(for: .kilocalorie())
 
-                    return WorkoutSession(
+                    let session = WorkoutSession(
                         workoutType: typeName,
                         start: w.startDate,
                         end: w.endDate,
@@ -239,10 +320,85 @@ class HealthKitManager: ObservableObject {
                         distanceKm: dist,
                         activeCalories: cal
                     )
+                    cacheMap[session.id] = w
+                    return session
                 }
-                continuation.resume(returning: sessions)
+                continuation.resume(returning: (sessions, cacheMap))
             }
-            store.execute(query)
+            self.store.execute(query)
+        }
+
+        hkWorkoutCache = cache
+        return sessions
+    }
+
+    // MARK: - Workout Routes
+
+    func loadRoute(for workout: WorkoutSession) async {
+        // Skip if already loaded
+        if workoutRoutes[workout.id] != nil { return }
+
+        // Try cache first, otherwise re-query HealthKit for the workout
+        var hkWorkout: HKWorkout? = hkWorkoutCache[workout.id]
+        if hkWorkout == nil {
+            hkWorkout = await findHKWorkout(matching: workout)
+        }
+
+        guard let hkWorkout else {
+            workoutRoutes[workout.id] = []
+            return
+        }
+
+        let routeType = HKSeriesType.workoutRoute()
+        let pred = HKQuery.predicateForObjects(from: hkWorkout)
+
+        let routes: [HKWorkoutRoute] = await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: routeType, predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+                cont.resume(returning: (samples as? [HKWorkoutRoute]) ?? [])
+            }
+            self.store.execute(q)
+        }
+
+        guard let route = routes.first else {
+            workoutRoutes[workout.id] = []
+            return
+        }
+
+        let coords = await fetchRouteCoordinates(for: route)
+        workoutRoutes[workout.id] = coords
+    }
+
+    private func findHKWorkout(matching workout: WorkoutSession) async -> HKWorkout? {
+        let pred = HKQuery.predicateForSamples(withStart: workout.start, end: workout.end, options: .strictStartDate)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+        return await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: .workoutType(), predicate: pred, limit: 5, sortDescriptors: [sort]) { _, samples, _ in
+                let match = (samples as? [HKWorkout])?.first { w in
+                    w.workoutActivityType.displayName == workout.workoutType
+                }
+                cont.resume(returning: match)
+            }
+            self.store.execute(q)
+        }
+    }
+
+    private func fetchRouteCoordinates(for route: HKWorkoutRoute) async -> [CLLocationCoordinate2D] {
+        final class Accumulator: @unchecked Sendable {
+            var locations: [CLLocation] = []
+        }
+        let acc = Accumulator()
+
+        return await withCheckedContinuation { cont in
+            let query = HKWorkoutRouteQuery(route: route) { _, locs, done, _ in
+                if let locs = locs {
+                    acc.locations.append(contentsOf: locs)
+                }
+                if done {
+                    cont.resume(returning: acc.locations.map { $0.coordinate })
+                }
+            }
+            self.store.execute(query)
         }
     }
 
@@ -343,6 +499,49 @@ class HealthKitManager: ObservableObject {
         }
 
         return max(0, min(100, Int(score)))
+    }
+
+    // MARK: - Historical Daily Samples
+
+    private func fetchDailySamples(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, from startDate: Date, to endDate: Date, options: HKStatisticsOptions) async -> [DailyMetric] {
+        guard let type = HKQuantityType.quantityType(forIdentifier: identifier) else { return [] }
+
+        let anchorDate = Calendar.current.startOfDay(for: endDate)
+        let interval = DateComponents(day: 1)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: options,
+                anchorDate: anchorDate,
+                intervalComponents: interval
+            )
+
+            query.initialResultsHandler = { _, results, _ in
+                guard let results = results else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                var metrics: [DailyMetric] = []
+                results.enumerateStatistics(from: startDate, to: endDate) { stats, _ in
+                    let value: Double?
+                    if options.contains(.cumulativeSum) {
+                        value = stats.sumQuantity()?.doubleValue(for: unit)
+                    } else {
+                        value = stats.averageQuantity()?.doubleValue(for: unit)
+                    }
+                    if let value = value, value > 0 {
+                        metrics.append(DailyMetric(date: stats.startDate, value: value))
+                    }
+                }
+                continuation.resume(returning: metrics)
+            }
+
+            self.store.execute(query)
+        }
     }
 
     // MARK: - HealthKit Query Helpers

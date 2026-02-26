@@ -12,6 +12,7 @@ struct HealthClawApp: App {
                 .environmentObject(healthManager)
                 .environmentObject(syncManager)
                 .environmentObject(settings)
+                .preferredColorScheme(.dark)
                 .task {
                     await healthManager.requestAuthorization()
                     syncManager.configure(healthManager: healthManager, settings: settings)

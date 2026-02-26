@@ -5,17 +5,17 @@ struct MainTabView: View {
         TabView {
             DashboardView()
                 .tabItem {
-                    Label("Dashboard", systemImage: "heart.text.square")
+                    Label("Home", systemImage: "house.fill")
                 }
 
             WorkoutsView()
                 .tabItem {
-                    Label("Workouts", systemImage: "figure.run")
+                    Label("Fitness", systemImage: "figure.run")
                 }
 
             SleepView()
                 .tabItem {
-                    Label("Sleep", systemImage: "bed.double")
+                    Label("Sleep", systemImage: "moon.zzz.fill")
                 }
 
             SettingsView()
@@ -23,5 +23,6 @@ struct MainTabView: View {
                     Label("Settings", systemImage: "gear")
                 }
         }
+        .tint(.white)
     }
 }

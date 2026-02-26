@@ -1,0 +1,149 @@
+{
+  "" : {
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClaw-primary.dia",
+    "emit-module-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClaw-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClaw-primary-emit-module.dia",
+    "pch" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClaw-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClaw-primary.swiftdeps"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/HealthClawApp.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthClawApp~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Models/HealthData.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthData~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Services/AppSettings.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/AppSettings~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Services/HealthKitManager.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/HealthKitManager~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Services/SyncManager.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SyncManager~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/Components/ChartComponents.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/ChartComponents~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/Components/Theme.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/Theme~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/Components/WorkoutMapView.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutMapView~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/DashboardView.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/DashboardView~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/MainTabView.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/MainTabView~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/SettingsView.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/SleepView.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/SleepView~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/HealthClaw/Views/WorkoutsView.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/WorkoutsView~partial.swiftmodule"
+  },
+  "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/lars/coding_projects/HealthClaw/ios/build/HealthClaw.build/Debug-iphoneos/HealthClaw.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

@@ -28,11 +28,17 @@
 	<string>HealthClaw needs access to your health data to display insights and sync to your personal server.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>HealthClaw may write health data.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>HealthClaw uses your location to display workout route maps.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
 </dict>
 </plist>

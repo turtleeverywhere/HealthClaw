@@ -5,11 +5,11 @@ options:
     iOS: "17.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: false
+  createIntermediateGroups: true
 
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    TARGETED_DEVICE_FAMILY: "1"
     INFOPLIST_FILE: HealthClaw/Info.plist
 
 targets:
@@ -20,6 +20,9 @@ targets:
       - path: HealthClaw
         excludes:
           - "**/.DS_Store"
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
     info:
       path: HealthClaw/Info.plist
       properties:
@@ -27,8 +30,11 @@ targets:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
         NSHealthShareUsageDescription: "HealthClaw needs access to your health data to display insights and sync to your personal server."
         NSHealthUpdateUsageDescription: "HealthClaw may write health data."
+        NSLocationWhenInUseUsageDescription: "HealthClaw uses your location to display workout route maps."
         UIBackgroundModes:
           - processing
         BGTaskSchedulerPermittedIdentifiers:
@@ -39,7 +45,55 @@ targets:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
         com.apple.developer.healthkit.background-delivery: true
+        com.apple.security.application-groups:
+          - group.com.flyingturtle.healthclaw
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.healthclaw.app
-        DEVELOPMENT_TEAM: ""
+        PRODUCT_BUNDLE_IDENTIFIER: com.flyingturtle.healthclaw
+        DEVELOPMENT_TEAM: WDJPX25GFC
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.0"
+        INFOPLIST_KEY_CFBundleDisplayName: HealthClaw
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - target: HealthClawWidgetExtension
+        embed: true
+    scheme:
+      testTargets: []
+      gatherCoverageData: false
+
+  HealthClawWidgetExtension:
+    type: app-extension
+    platform: iOS
+    product: HealthClawWidgetExtension
+    sources:
+      - path: HealthClawWidget
+        excludes:
+          - "**/.DS_Store"
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+    entitlements:
+      path: HealthClawWidget/HealthClawWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.flyingturtle.healthclaw
+    info:
+      path: HealthClawWidget/Info.plist
+      properties:
+        CFBundleDisplayName: HealthClaw Widget
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.flyingturtle.healthclaw.widget
+        DEVELOPMENT_TEAM: WDJPX25GFC
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: true
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks"
