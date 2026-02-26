@@ -144,8 +144,8 @@ final class NutritionService {
         guard HKHealthStore.isHealthDataAvailable() else { return }
 
         for sample in result.healthkitSamples {
-            guard let typeId = HKQuantityTypeIdentifier(rawValue: sample.identifier),
-                  let quantityType = HKQuantityType.quantityType(forIdentifier: typeId) else {
+            let typeId = HKQuantityTypeIdentifier(rawValue: sample.identifier)
+            guard let quantityType = HKQuantityType.quantityType(forIdentifier: typeId) else {
                 continue
             }
 
