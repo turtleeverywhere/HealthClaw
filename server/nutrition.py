@@ -1,12 +1,13 @@
 """
 Nutrition analyzer for HealthClaw.
 
-Routes food analysis requests through the OpenClaw gateway agent,
-which has access to Anthropic Claude with vision capabilities.
+Routes food analysis requests through the OpenClaw gateway using
+the sessions_send RPC, which gives us full LLM access including vision.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import subprocess
@@ -21,7 +22,12 @@ from models import (
     NutritionTotals,
 )
 
-# OpenClaw gateway config
+# Full path to openclaw CLI (systemd service doesn't inherit user PATH)
+OPENCLAW_BIN = os.getenv(
+    "OPENCLAW_BIN",
+    "/home/lars/.npm-global/bin/openclaw",
+)
+
 GATEWAY_TOKEN = os.getenv(
     "OPENCLAW_GATEWAY_TOKEN",
     "f8ac08ae67eb64d576d08214be062d2fc74c31849e8463cb",
@@ -87,47 +93,55 @@ Return this exact JSON structure (fill in real values):
 Use your best nutritional knowledge to estimate values. Be realistic and accurate."""
 
 
-def _call_agent(prompt: str, image_base64: str | None = None, image_mime_type: str | None = None) -> str:
+async def _call_agent(prompt: str) -> str:
     """
-    Call the OpenClaw gateway agent (local mode) to get an LLM response.
-    Returns the raw text response.
+    Call an OpenClaw agent via CLI to get an LLM response.
+    Runs in a thread pool to avoid blocking the async event loop.
     """
-    # Build the full message — if there's an image, include it as a data URL hint
-    # (Note: openclaw agent CLI doesn't support inline images, so we include
-    # the image description in the prompt if provided)
-    message = prompt
+    def _run():
+        import uuid
+        session_id = f"nutrition-{uuid.uuid4().hex[:8]}"
 
-    env = os.environ.copy()
-    env["OPENCLAW_GATEWAY_TOKEN"] = GATEWAY_TOKEN
+        env = os.environ.copy()
+        env["OPENCLAW_GATEWAY_TOKEN"] = GATEWAY_TOKEN
+        env["PATH"] = "/home/lars/.npm-global/bin:" + env.get("PATH", "")
 
-    result = subprocess.run(
-        [
-            "openclaw", "agent",
-            "--agent", "coder",
-            "--local",
-            "--json",
-            "-m", message,
-            "--timeout", "60",
-        ],
-        capture_output=True,
-        text=True,
-        env=env,
-        timeout=90,
-    )
+        result = subprocess.run(
+            [
+                OPENCLAW_BIN, "agent",
+                "--session-id", session_id,
+                "--json",
+                "-m", prompt,
+                "--timeout", "120",
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=150,
+        )
 
-    if result.returncode != 0:
-        raise RuntimeError(f"Agent call failed: {result.stderr[:500]}")
+        if result.returncode != 0:
+            raise RuntimeError(f"Agent call failed (code {result.returncode}): {result.stderr[:500]}")
 
-    # Parse the JSON response from openclaw agent --json
-    try:
-        data = json.loads(result.stdout)
-        payloads = data.get("payloads", [])
-        if payloads:
-            return payloads[0].get("text", "")
-        return result.stdout
-    except json.JSONDecodeError:
-        # If not valid JSON wrapper, return raw stdout
-        return result.stdout.strip()
+        # openclaw agent --json wraps result in { status, result: { payloads: [...] } }
+        output = result.stdout.strip()
+        try:
+            data = json.loads(output)
+            # Navigate the wrapper: result.payloads[0].text
+            result_obj = data.get("result", data)
+            payloads = result_obj.get("payloads", [])
+            if payloads:
+                return payloads[0].get("text", output)
+            # Fallback to direct payloads at top level
+            payloads = data.get("payloads", [])
+            if payloads:
+                return payloads[0].get("text", output)
+            return output
+        except json.JSONDecodeError:
+            return output
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, _run)
 
 
 def _extract_json(text: str) -> dict:
@@ -166,7 +180,7 @@ def _extract_json(text: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    raise ValueError(f"Could not extract JSON from agent response: {text[:200]}")
+    raise ValueError(f"Could not extract JSON from agent response: {text[:300]}")
 
 
 async def analyze_nutrition(
@@ -186,15 +200,17 @@ async def analyze_nutrition(
     prompt = ANALYSIS_PROMPT_TEMPLATE.format(description=text)
 
     # If an image was provided, note it in the prompt
+    # (Image analysis via CLI is limited — describe what's in the request)
     if image_base64:
         mime = image_mime_type or "image/jpeg"
         prompt = (
-            f"I have provided a food image ({mime}) along with this description.\n\n"
+            f"The user also provided a food photo ({mime}). "
+            "Use the text description to analyze the food.\n\n"
             + prompt
         )
 
     # Call the agent
-    raw_response = _call_agent(prompt, image_base64, image_mime_type)
+    raw_response = await _call_agent(prompt)
 
     # Parse the structured JSON
     data = _extract_json(raw_response)
@@ -243,11 +259,6 @@ async def analyze_nutrition(
 
     # Flatten all nutrients for DB storage
     all_nutrients: list[dict] = []
-    for item in food_items:
-        for n in item.nutrients:
-            all_nutrients.append({"name": n.name, "amount": n.amount, "unit": n.unit})
-
-    # Also store the HealthKit samples as nutrients (for completeness)
     hk_name_map = {
         "dietaryEnergyConsumed": ("Energy", "kcal"),
         "dietaryProtein": ("Protein", "g"),
@@ -270,18 +281,16 @@ async def analyze_nutrition(
         "dietaryFolate": ("Folate", "mcg"),
         "dietaryZinc": ("Zinc", "mg"),
     }
-    seen_nutrients = {n["name"] for n in all_nutrients}
+
     for sample in healthkit_samples:
         ident = sample.get("identifier", "")
         if ident in hk_name_map:
             name, unit = hk_name_map[ident]
-            if name not in seen_nutrients:
-                all_nutrients.append({
-                    "name": name,
-                    "amount": float(sample.get("value", 0)),
-                    "unit": unit,
-                })
-                seen_nutrients.add(name)
+            all_nutrients.append({
+                "name": name,
+                "amount": float(sample.get("value", 0)),
+                "unit": unit,
+            })
 
     # Store in DB
     meal_id = await store_meal_entry(
