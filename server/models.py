@@ -1,4 +1,4 @@
-"""Pydantic models for the HealthBridge API."""
+"""Pydantic models for the HealthClaw API."""
 
 from __future__ import annotations
 from datetime import datetime

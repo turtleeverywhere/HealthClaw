@@ -33,7 +33,7 @@ struct DashboardView: View {
 
                     // Body
                     if let body = healthManager.bodyData, body.weightKg != nil {
-                        BodyCard(body: body)
+                        BodyCard(bodyData: body)
                     }
 
                     // Recent workout
@@ -43,7 +43,7 @@ struct DashboardView: View {
                 }
                 .padding()
             }
-            .navigationTitle("HealthBridge")
+            .navigationTitle("HealthClaw")
             .refreshable {
                 await healthManager.refreshDashboard()
             }
@@ -243,7 +243,7 @@ struct SleepStagePill: View {
 // MARK: - Body Card
 
 struct BodyCard: View {
-    let body: BodyData
+    let bodyData: BodyData
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -254,7 +254,7 @@ struct BodyCard: View {
                     .font(.headline)
             }
             HStack(spacing: 24) {
-                if let w = self.body.weightKg {
+                if let w = bodyData.weightKg {
                     VStack {
                         Text(String(format: "%.1f", w))
                             .font(.title2.bold())
@@ -263,7 +263,7 @@ struct BodyCard: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                if let bf = self.body.bodyFatPct {
+                if let bf = bodyData.bodyFatPct {
                     VStack {
                         Text(String(format: "%.1f%%", bf))
                             .font(.title2.bold())
@@ -272,7 +272,7 @@ struct BodyCard: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                if let bmi = self.body.bmi {
+                if let bmi = bodyData.bmi {
                     VStack {
                         Text(String(format: "%.1f", bmi))
                             .font(.title2.bold())

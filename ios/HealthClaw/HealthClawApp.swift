@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct HealthBridgeApp: App {
+struct HealthClawApp: App {
     @StateObject private var healthManager = HealthKitManager()
     @StateObject private var syncManager = SyncManager()
     @StateObject private var settings = AppSettings()

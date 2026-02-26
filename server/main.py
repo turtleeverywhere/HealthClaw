@@ -1,4 +1,4 @@
-"""HealthBridge API server."""
+"""HealthClaw API server."""
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Header, HTTPException, Query
@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="HealthBridge",
+    title="HealthClaw",
     description="API for receiving and querying Apple Health data",
     version="0.1.0",
     lifespan=lifespan,

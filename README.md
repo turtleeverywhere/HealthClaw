@@ -1,4 +1,4 @@
-# HealthBridge 🏥
+# HealthClaw 🏥
 
 Sync Apple Health data to your personal server for AI-powered health insights.
 
@@ -44,7 +44,7 @@ cd server
 pip install -r requirements.txt
 
 # Set your API key
-export HEALTHBRIDGE_API_KEY="your-secret-key"
+export HEALTHCLAW_API_KEY="your-secret-key"
 
 # Run
 python main.py

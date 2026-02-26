@@ -1,0 +1,359 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		170AC36C0921BAF7F71F8E04 /* HealthClawApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25FDA4408F22594541D0C84 /* HealthClawApp.swift */; };
+		1F17CEDC720EADEEC0668FF2 /* SyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A3592035BEDCA2D5B3D744A /* SyncManager.swift */; };
+		51F32632B5D8A713A25E6A22 /* WorkoutsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26EDC0559944C21921C67A0C /* WorkoutsView.swift */; };
+		8F58D3A66E1B35BFE16D4C32 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CF38B646E9C507EEA0E1C4 /* AppSettings.swift */; };
+		9C43E959251B3E60A5CBD136 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF930C62C83A23227B472195 /* HealthKitManager.swift */; };
+		9FE54577885F51B1BB1D2BA0 /* SleepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85846D6A020EFFCA436A8CC5 /* SleepView.swift */; };
+		D34E8C6E08CAB20D4CCF7B70 /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 684BD1E78DC39148D87C6312 /* HealthData.swift */; };
+		E06FF1208B3767E9F6B52397 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1E2905991F619C642F90AE /* DashboardView.swift */; };
+		FAE021E44AB4D0B0A0C85D8F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B806AAED77C72F5D50D516 /* SettingsView.swift */; };
+		FBADA18C2D7422CC52CF23FF /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6870F98EDFC49F41817F62 /* MainTabView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1F1E2905991F619C642F90AE /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		26EDC0559944C21921C67A0C /* WorkoutsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutsView.swift; sourceTree = "<group>"; };
+		468F559C2F504E8400595C59 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
+		5A3592035BEDCA2D5B3D744A /* SyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncManager.swift; sourceTree = "<group>"; };
+		684BD1E78DC39148D87C6312 /* HealthData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthData.swift; sourceTree = "<group>"; };
+		85846D6A020EFFCA436A8CC5 /* SleepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepView.swift; sourceTree = "<group>"; };
+		A7B806AAED77C72F5D50D516 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B5FE7B2AB0EFC38171E4B7E2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C0CF38B646E9C507EEA0E1C4 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		D25FDA4408F22594541D0C84 /* HealthClawApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthClawApp.swift; sourceTree = "<group>"; };
+		DD6870F98EDFC49F41817F62 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		DF930C62C83A23227B472195 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
+		E50B02F7D880904D4625B1D8 /* HealthClaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthClaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EA2BABAE6A1A14BD8734D72B /* HealthClaw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthClaw.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		260E9BCBD4B87C5BA8683473 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E50B02F7D880904D4625B1D8 /* HealthClaw.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3633955F5BDAA4DD9FFCC841 /* HealthClaw */ = {
+			isa = PBXGroup;
+			children = (
+				EA2BABAE6A1A14BD8734D72B /* HealthClaw.entitlements */,
+				D25FDA4408F22594541D0C84 /* HealthClawApp.swift */,
+				B5FE7B2AB0EFC38171E4B7E2 /* Info.plist */,
+				EF7A85D39B0AE0AA763B54D4 /* Models */,
+				6018DF51072BEE840A08BB74 /* Services */,
+				ACDCEABE4F85514E61C0FF63 /* Views */,
+			);
+			path = HealthClaw;
+			sourceTree = "<group>";
+		};
+		6018DF51072BEE840A08BB74 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				C0CF38B646E9C507EEA0E1C4 /* AppSettings.swift */,
+				DF930C62C83A23227B472195 /* HealthKitManager.swift */,
+				5A3592035BEDCA2D5B3D744A /* SyncManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		9F3B056EA70B73A6C7239DE8 = {
+			isa = PBXGroup;
+			children = (
+				468F559C2F504E8400595C59 /* Media.xcassets */,
+				3633955F5BDAA4DD9FFCC841 /* HealthClaw */,
+				260E9BCBD4B87C5BA8683473 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		ACDCEABE4F85514E61C0FF63 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1F1E2905991F619C642F90AE /* DashboardView.swift */,
+				DD6870F98EDFC49F41817F62 /* MainTabView.swift */,
+				A7B806AAED77C72F5D50D516 /* SettingsView.swift */,
+				85846D6A020EFFCA436A8CC5 /* SleepView.swift */,
+				26EDC0559944C21921C67A0C /* WorkoutsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		EF7A85D39B0AE0AA763B54D4 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				684BD1E78DC39148D87C6312 /* HealthData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		77F2057CF3D1FD4549726F6E /* HealthClaw */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E40EB65E25F90F45D2D1BEA3 /* Build configuration list for PBXNativeTarget "HealthClaw" */;
+			buildPhases = (
+				EA79C4F118083CDD491CA9FA /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HealthClaw;
+			packageProductDependencies = (
+			);
+			productName = HealthClaw;
+			productReference = E50B02F7D880904D4625B1D8 /* HealthClaw.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1F2CABAF3054D34BEB540DA9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 5D2CE8F1CF6B0FD94B7ED13B /* Build configuration list for PBXProject "HealthClaw" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 9F3B056EA70B73A6C7239DE8;
+			minimizedProjectReferenceProxies = 1;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				77F2057CF3D1FD4549726F6E /* HealthClaw */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EA79C4F118083CDD491CA9FA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8F58D3A66E1B35BFE16D4C32 /* AppSettings.swift in Sources */,
+				E06FF1208B3767E9F6B52397 /* DashboardView.swift in Sources */,
+				170AC36C0921BAF7F71F8E04 /* HealthClawApp.swift in Sources */,
+				D34E8C6E08CAB20D4CCF7B70 /* HealthData.swift in Sources */,
+				9C43E959251B3E60A5CBD136 /* HealthKitManager.swift in Sources */,
+				FBADA18C2D7422CC52CF23FF /* MainTabView.swift in Sources */,
+				FAE021E44AB4D0B0A0C85D8F /* SettingsView.swift in Sources */,
+				9FE54577885F51B1BB1D2BA0 /* SleepView.swift in Sources */,
+				1F17CEDC720EADEEC0668FF2 /* SyncManager.swift in Sources */,
+				51F32632B5D8A713A25E6A22 /* WorkoutsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9E5CBF4A8D5478FAD6CC0903 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HealthClaw/HealthClaw.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WDJPX25GFC;
+				INFOPLIST_FILE = HealthClaw/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HealthClaw;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flyingturtle.healthclaw;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BD7D153B6AE77F603523D261 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = HealthClaw/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E1B65E86B8FAFCE726444075 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = HealthClaw/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E27063376138AE4286FF03FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HealthClaw/HealthClaw.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WDJPX25GFC;
+				INFOPLIST_FILE = HealthClaw/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HealthClaw;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flyingturtle.healthclaw;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5D2CE8F1CF6B0FD94B7ED13B /* Build configuration list for PBXProject "HealthClaw" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1B65E86B8FAFCE726444075 /* Debug */,
+				BD7D153B6AE77F603523D261 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E40EB65E25F90F45D2D1BEA3 /* Build configuration list for PBXNativeTarget "HealthClaw" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9E5CBF4A8D5478FAD6CC0903 /* Debug */,
+				E27063376138AE4286FF03FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1F2CABAF3054D34BEB540DA9 /* Project object */;
+}

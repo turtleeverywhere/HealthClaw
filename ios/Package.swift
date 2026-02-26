@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "HealthBridge",
+    name: "HealthClaw",
     platforms: [.iOS(.v17)],
     products: [
-        .library(name: "HealthBridge", targets: ["HealthBridge"]),
+        .library(name: "HealthClaw", targets: ["HealthClaw"]),
     ],
     targets: [
         .target(
-            name: "HealthBridge",
-            path: "HealthBridge"
+            name: "HealthClaw",
+            path: "HealthClaw"
         ),
     ]
 )

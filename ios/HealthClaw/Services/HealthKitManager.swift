@@ -1,5 +1,6 @@
 import Foundation
 import HealthKit
+import UIKit
 
 @MainActor
 class HealthKitManager: ObservableObject {
@@ -119,14 +120,16 @@ class HealthKitManager: ObservableObject {
     private func fetchActivity(from start: Date, to end: Date) async -> ActivityData {
         var data = ActivityData()
         data.steps = Int(await sumQuantity(.stepCount, unit: .count(), from: start, to: end))
-        data.distanceKm = await sumQuantity(.distanceWalkingRunning, unit: HKUnit.meter(), from: start, to: end) / 1000.0
-            + await sumQuantity(.distanceCycling, unit: HKUnit.meter(), from: start, to: end) / 1000.0
+        let walkDist = await sumQuantity(.distanceWalkingRunning, unit: HKUnit.meter(), from: start, to: end) / 1000.0
+        let cycleDist = await sumQuantity(.distanceCycling, unit: HKUnit.meter(), from: start, to: end) / 1000.0
+        data.distanceKm = walkDist + cycleDist
         data.activeCalories = await sumQuantity(.activeEnergyBurned, unit: .kilocalorie(), from: start, to: end)
         data.basalCalories = await sumQuantity(.basalEnergyBurned, unit: .kilocalorie(), from: start, to: end)
         data.exerciseMinutes = await sumQuantity(.appleExerciseTime, unit: .minute(), from: start, to: end)
         data.flightsClimbed = Int(await sumQuantity(.flightsClimbed, unit: .count(), from: start, to: end))
         data.vo2Max = await latestQuantity(.vo2Max, unit: HKUnit(from: "ml/kg*min"), from: start, to: end)
-        data.walkingSpeedKmh = await avgQuantity(.walkingSpeed, unit: HKUnit(from: "m/s"), from: start, to: end).map { $0 * 3.6 }
+        let speedMs = await avgQuantity(.walkingSpeed, unit: HKUnit(from: "m/s"), from: start, to: end)
+        data.walkingSpeedKmh = speedMs.map { $0 * 3.6 }
         return data
     }
 
@@ -224,7 +227,7 @@ class HealthKitManager: ObservableObject {
                 let sessions = workouts.map { w -> WorkoutSession in
                     let typeName = w.workoutActivityType.displayName
                     let dur = w.duration / 60.0
-                    let dist = w.totalDistance?.doubleValue(for: .meter()).map { $0 / 1000.0 }
+                    let dist = w.totalDistance.map { $0.doubleValue(for: .meter()) / 1000.0 }
                     let cal = w.totalEnergyBurned?.doubleValue(for: .kilocalorie())
 
                     return WorkoutSession(

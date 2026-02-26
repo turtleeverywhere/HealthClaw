@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HealthBridge Analyzer — queries the API and outputs a health summary for the agent.
+HealthClaw Analyzer — queries the API and outputs a health summary for the agent.
 Run daily via OpenClaw cron. Outputs markdown to stdout.
 """
 
@@ -10,8 +10,8 @@ import sys
 import urllib.request
 from datetime import datetime
 
-BASE_URL = os.getenv("HEALTHBRIDGE_URL", "http://localhost:8099")
-API_KEY = os.getenv("HEALTHBRIDGE_API_KEY", "hb-lars-2026")
+BASE_URL = os.getenv("HEALTHCLAW_URL", "http://localhost:8099")
+API_KEY = os.getenv("HEALTHCLAW_API_KEY", "hb-lars-2026")
 
 
 def api_get(path: str, params: dict | None = None) -> dict:

@@ -1,13 +1,13 @@
 [Unit]
-Description=HealthBridge API Server
+Description=HealthClaw API Server
 After=network.target
 
 [Service]
 Type=simple
 User=lars
-WorkingDirectory=/home/lars/.openclaw/workspace-coder/HealthBridge/server
-Environment=HEALTHBRIDGE_API_KEY=hb-lars-2026
-Environment=HEALTHBRIDGE_PORT=8099
+WorkingDirectory=/home/lars/.openclaw/workspace-coder/HealthClaw/server
+Environment=HEALTHCLAW_API_KEY=hb-lars-2026
+Environment=HEALTHCLAW_PORT=8099
 ExecStart=/usr/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8099
 Restart=on-failure
 RestartSec=5

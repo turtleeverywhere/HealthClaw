@@ -1,0 +1,45 @@
+name: HealthClaw
+options:
+  bundleIdPrefix: com.healthclaw
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1"
+    INFOPLIST_FILE: HealthClaw/Info.plist
+
+targets:
+  HealthClaw:
+    type: application
+    platform: iOS
+    sources:
+      - path: HealthClaw
+        excludes:
+          - "**/.DS_Store"
+    info:
+      path: HealthClaw/Info.plist
+      properties:
+        CFBundleDisplayName: HealthClaw
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        NSHealthShareUsageDescription: "HealthClaw needs access to your health data to display insights and sync to your personal server."
+        NSHealthUpdateUsageDescription: "HealthClaw may write health data."
+        UIBackgroundModes:
+          - processing
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.healthclaw.sync
+    entitlements:
+      path: HealthClaw/HealthClaw.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.developer.healthkit.background-delivery: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.healthclaw.app
+        DEVELOPMENT_TEAM: ""

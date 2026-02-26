@@ -1,4 +1,4 @@
-"""SQLite database layer for HealthBridge."""
+"""SQLite database layer for HealthClaw."""
 
 from __future__ import annotations
 
