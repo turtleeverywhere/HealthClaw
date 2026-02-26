@@ -137,6 +137,64 @@ final class NutritionService {
         }
     }
 
+    // MARK: - Update Meal on Server
+
+    func updateMealOnServer(_ result: NutritionAnalysisResult) async throws {
+        guard settings.isConfigured else { return }
+
+        let url = URL(string: "\(settings.baseURL)/api/nutrition/meals/\(result.mealId)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(settings.apiKey, forHTTPHeaderField: "X-API-Key")
+
+        let body: [String: Any] = [
+            "description": result.description,
+            "food_items": result.foodItems.map { [
+                "name": $0.name,
+                "portion": $0.portion,
+                "calories": $0.calories,
+                "protein_g": $0.proteinG,
+                "carbs_g": $0.carbsG,
+                "fat_g": $0.fatG,
+                "fiber_g": $0.fiberG ?? 0,
+                "sugar_g": $0.sugarG ?? 0,
+                "sodium_mg": $0.sodiumMg ?? 0,
+            ] as [String: Any] },
+            "totals": [
+                "calories": result.totals.calories,
+                "protein_g": result.totals.proteinG,
+                "carbs_g": result.totals.carbsG,
+                "fat_g": result.totals.fatG,
+                "fiber_g": result.totals.fiberG ?? 0,
+                "sugar_g": result.totals.sugarG ?? 0,
+                "sodium_mg": result.totals.sodiumMg ?? 0,
+            ],
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            throw NutritionServiceError.invalidResponse(http.statusCode)
+        }
+    }
+
+    // MARK: - Delete Meal on Server
+
+    func deleteMealOnServer(mealId: Int) async throws {
+        guard settings.isConfigured else { return }
+
+        let url = URL(string: "\(settings.baseURL)/api/nutrition/meals/\(mealId)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue(settings.apiKey, forHTTPHeaderField: "X-API-Key")
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            throw NutritionServiceError.invalidResponse(http.statusCode)
+        }
+    }
+
     // MARK: - Write HealthKit Samples
 
     /// Write all healthkit_samples into HealthKit. Returns saved sample UUIDs.

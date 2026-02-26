@@ -107,6 +107,47 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    /// Read today's dietary totals from HealthKit (source of truth).
+    func fetchDietaryTotals(for date: Date) async -> DailyNutritionSummary? {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: date)
+        guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return nil }
+
+        let kcal = await sumQuantity(.dietaryEnergyConsumed, unit: .kilocalorie(), from: start, to: end)
+        let protein = await sumQuantity(.dietaryProtein, unit: .gram(), from: start, to: end)
+        let carbs = await sumQuantity(.dietaryCarbohydrates, unit: .gram(), from: start, to: end)
+        let fat = await sumQuantity(.dietaryFatTotal, unit: .gram(), from: start, to: end)
+
+        // Count distinct dietary energy samples as meal count proxy
+        let mealCount = await countSamples(.dietaryEnergyConsumed, from: start, to: end)
+
+        let dateStr = {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd"
+            return f.string(from: date)
+        }()
+
+        return DailyNutritionSummary(
+            date: dateStr,
+            mealCount: mealCount,
+            totalCalories: kcal,
+            totalProteinG: protein,
+            totalCarbsG: carbs,
+            totalFatG: fat
+        )
+    }
+
+    private func countSamples(_ identifier: HKQuantityTypeIdentifier, from start: Date, to end: Date) async -> Int {
+        guard let type = HKQuantityType.quantityType(forIdentifier: identifier) else { return 0 }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
+        return await withCheckedContinuation { cont in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+                cont.resume(returning: samples?.count ?? 0)
+            }
+            store.execute(query)
+        }
+    }
+
     /// Write a single dietary quantity sample to HealthKit.
     func writeDietarySample(
         identifier: HKQuantityTypeIdentifier,

@@ -17,10 +17,13 @@ from database import (
     get_meal_entry,
     get_meal_history,
     get_daily_nutrition_summary,
+    update_meal_entry,
+    delete_meal_entry,
 )
 from models import (
     DailyNutritionSummary,
     HealthSyncPayload,
+    MealUpdateRequest,
     NutritionAnalysisRequest,
     NutritionAnalysisResponse,
     NutritionHistoryEntry,
@@ -142,10 +145,10 @@ async def nutrition_history(
     days: int = Query(default=7, ge=1, le=90),
     x_api_key: str = Header(...),
 ):
-    """Return meal entries for the last N days."""
+    """Return meal entries for the last N days (shaped as NutritionAnalysisResult array)."""
     verify_api_key(x_api_key)
     entries = await get_meal_history(days)
-    return {"days": days, "meals": entries}
+    return entries
 
 
 @app.get("/api/nutrition/summary")
@@ -177,6 +180,52 @@ async def nutrition_meal_detail(
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found")
     return meal
+
+
+@app.put("/api/nutrition/meals/{meal_id}")
+async def nutrition_meal_update(
+    meal_id: int,
+    request: MealUpdateRequest,
+    x_api_key: str = Header(...),
+):
+    """Update a meal's totals and food items."""
+    verify_api_key(x_api_key)
+    import json
+
+    food_items_json = json.dumps([item.model_dump() for item in request.food_items])
+    nutrients = []
+    for item in request.food_items:
+        nutrients.append({"name": "Energy", "amount": item.calories, "unit": "kcal"})
+        nutrients.append({"name": "Protein", "amount": item.protein_g, "unit": "g"})
+        nutrients.append({"name": "Carbohydrates", "amount": item.carbs_g, "unit": "g"})
+        nutrients.append({"name": "Fat Total", "amount": item.fat_g, "unit": "g"})
+
+    ok = await update_meal_entry(
+        meal_id=meal_id,
+        description=request.description,
+        total_calories=request.totals.calories,
+        total_protein_g=request.totals.protein_g,
+        total_carbs_g=request.totals.carbs_g,
+        total_fat_g=request.totals.fat_g,
+        food_items_json=food_items_json,
+        nutrients=nutrients,
+    )
+    if not ok:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    return {"status": "ok"}
+
+
+@app.delete("/api/nutrition/meals/{meal_id}")
+async def nutrition_meal_delete(
+    meal_id: int,
+    x_api_key: str = Header(...),
+):
+    """Delete a meal entry."""
+    verify_api_key(x_api_key)
+    ok = await delete_meal_entry(meal_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

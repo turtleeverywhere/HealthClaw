@@ -91,6 +91,9 @@ final class NutritionManager: ObservableObject {
             let newUUIDs = try await service.writeHealthKitSamples(from: result)
             result.savedHKSampleUUIDs = newUUIDs
 
+            // Sync to server
+            try? await service.updateMealOnServer(result)
+
             withAnimation { messages[idx].analysisResult = result }
 
             if let mealIdx = recentMeals.firstIndex(where: { $0.mealId == result.mealId }) {
@@ -118,6 +121,9 @@ final class NutritionManager: ObservableObject {
             let newUUIDs = try await service.writeHealthKitSamples(from: result)
             result.savedHKSampleUUIDs = newUUIDs
 
+            // Sync to server
+            try? await service.updateMealOnServer(result)
+
             // Update in recentMeals
             if let mealIdx = recentMeals.firstIndex(where: { $0.mealId == result.mealId }) {
                 recentMeals[mealIdx] = result
@@ -138,12 +144,13 @@ final class NutritionManager: ObservableObject {
     // MARK: - Delete Meal (from chat)
 
     func deleteMeal(messageId: UUID) async {
-        guard service != nil else { return }
+        guard let service else { return }
 
         guard let idx = messages.firstIndex(where: { $0.id == messageId }),
               let result = messages[idx].analysisResult else { return }
 
         try? await deleteHKSamples(for: result)
+        try? await service.deleteMealOnServer(mealId: result.mealId)
 
         withAnimation {
             messages.remove(at: idx)
@@ -160,6 +167,9 @@ final class NutritionManager: ObservableObject {
 
     func deleteMealFromHistory(result: NutritionAnalysisResult) async {
         try? await deleteHKSamples(for: result)
+        if let service {
+            try? await service.deleteMealOnServer(mealId: result.mealId)
+        }
 
         recentMeals.removeAll { $0.mealId == result.mealId }
 
@@ -179,12 +189,8 @@ final class NutritionManager: ObservableObject {
     // MARK: - Refresh Summary
 
     func refreshSummary() async {
-        guard let service else { return }
-        do {
-            todaySummary = try await service.fetchDailySummary(date: Date())
-        } catch {
-            print("[NutritionManager] Summary fetch failed: \(error.localizedDescription)")
-        }
+        guard let healthManager else { return }
+        todaySummary = await healthManager.fetchDietaryTotals(for: Date())
     }
 
     // MARK: - Load Recent Meals

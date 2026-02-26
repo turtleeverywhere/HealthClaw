@@ -148,6 +148,12 @@ class NutritionAnalysisResponse(BaseModel):
     healthkit_samples: list[dict[str, Any]]
 
 
+class MealUpdateRequest(BaseModel):
+    description: Optional[str] = None
+    food_items: list[FoodItem] = []
+    totals: NutritionTotals
+
+
 class NutritionHistoryEntry(BaseModel):
     id: int
     date: str

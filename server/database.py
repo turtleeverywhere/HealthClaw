@@ -122,6 +122,11 @@ async def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_meal_entries_date ON meal_entries(date);
             CREATE INDEX IF NOT EXISTS idx_meal_nutrients_entry ON meal_nutrients(meal_entry_id);
         """)
+        # Migration: add food_items_json column if missing
+        try:
+            await db.execute("ALTER TABLE meal_entries ADD COLUMN food_items_json TEXT")
+        except Exception:
+            pass  # column already exists
         await db.commit()
 
 
@@ -340,16 +345,19 @@ async def store_meal_entry(
     total_fat_g: float | None,
     nutrients: list[dict],
     image_path: str | None = None,
+    food_items_json: str | None = None,
 ) -> int:
     """Store a meal entry and its nutrients. Returns the meal entry id."""
     async with aiosqlite.connect(DB_PATH) as db:
         cursor = await db.execute(
             """INSERT INTO meal_entries
                (date, timestamp, description, image_path, analysis_json,
-                total_calories, total_protein_g, total_carbs_g, total_fat_g)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                total_calories, total_protein_g, total_carbs_g, total_fat_g,
+                food_items_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (date, timestamp, description, image_path, analysis_json,
-             total_calories, total_protein_g, total_carbs_g, total_fat_g),
+             total_calories, total_protein_g, total_carbs_g, total_fat_g,
+             food_items_json),
         )
         meal_id = cursor.lastrowid
 
@@ -361,6 +369,56 @@ async def store_meal_entry(
 
         await db.commit()
         return meal_id
+
+
+async def update_meal_entry(
+    meal_id: int,
+    description: str | None,
+    total_calories: float,
+    total_protein_g: float,
+    total_carbs_g: float,
+    total_fat_g: float,
+    food_items_json: str | None = None,
+    nutrients: list[dict] | None = None,
+) -> bool:
+    """Update a meal entry's totals and optionally its food items/nutrients."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute("SELECT id FROM meal_entries WHERE id = ?", (meal_id,))
+        if not await cursor.fetchone():
+            return False
+
+        await db.execute(
+            """UPDATE meal_entries
+               SET total_calories = ?, total_protein_g = ?, total_carbs_g = ?, total_fat_g = ?,
+                   description = COALESCE(?, description),
+                   food_items_json = COALESCE(?, food_items_json)
+               WHERE id = ?""",
+            (total_calories, total_protein_g, total_carbs_g, total_fat_g,
+             description, food_items_json, meal_id),
+        )
+
+        if nutrients is not None:
+            await db.execute("DELETE FROM meal_nutrients WHERE meal_entry_id = ?", (meal_id,))
+            for n in nutrients:
+                await db.execute(
+                    "INSERT INTO meal_nutrients (meal_entry_id, nutrient_name, amount, unit) VALUES (?, ?, ?, ?)",
+                    (meal_id, n["name"], n["amount"], n["unit"]),
+                )
+
+        await db.commit()
+        return True
+
+
+async def delete_meal_entry(meal_id: int) -> bool:
+    """Delete a meal entry and its nutrients."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute("SELECT id FROM meal_entries WHERE id = ?", (meal_id,))
+        if not await cursor.fetchone():
+            return False
+        await db.execute("DELETE FROM meal_nutrients WHERE meal_entry_id = ?", (meal_id,))
+        await db.execute("DELETE FROM meal_entries WHERE id = ?", (meal_id,))
+        await db.commit()
+        return True
 
 
 async def get_meal_entry(meal_id: int) -> dict | None:
@@ -385,19 +443,51 @@ async def get_meal_entry(meal_id: int) -> dict | None:
 
 
 async def get_meal_history(days: int = 7) -> list[dict]:
-    """Get meal entries from the last N days (without full nutrients list)."""
+    """Get meal entries shaped as NutritionAnalysisResult for iOS."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
             """SELECT id, date, timestamp, description, total_calories,
-                      total_protein_g, total_carbs_g, total_fat_g, created_at
+                      total_protein_g, total_carbs_g, total_fat_g,
+                      food_items_json, analysis_json
                FROM meal_entries
                WHERE date >= date('now', ?)
                ORDER BY timestamp DESC""",
             (f"-{days} days",),
         )
         rows = await cursor.fetchall()
-        return [dict(row) for row in rows]
+
+        results = []
+        for row in rows:
+            r = dict(row)
+            # Parse food items from stored JSON or fall back to analysis_json
+            food_items = []
+            if r.get("food_items_json"):
+                try:
+                    food_items = json.loads(r["food_items_json"])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            elif r.get("analysis_json"):
+                try:
+                    analysis = json.loads(r["analysis_json"])
+                    food_items = analysis.get("food_items", [])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            results.append({
+                "meal_id": r["id"],
+                "timestamp": r["timestamp"],
+                "description": r["description"],
+                "food_items": food_items,
+                "totals": {
+                    "calories": r["total_calories"] or 0,
+                    "protein_g": r["total_protein_g"] or 0,
+                    "carbs_g": r["total_carbs_g"] or 0,
+                    "fat_g": r["total_fat_g"] or 0,
+                },
+                "healthkit_samples": [],
+            })
+        return results
 
 
 async def get_daily_nutrition_summary(date: str) -> dict:

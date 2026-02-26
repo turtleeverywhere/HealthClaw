@@ -293,6 +293,7 @@ async def analyze_nutrition(
             })
 
     # Store in DB
+    food_items_json_str = json.dumps(data.get("food_items", []))
     meal_id = await store_meal_entry(
         date=date_str,
         timestamp=timestamp_str,
@@ -303,6 +304,7 @@ async def analyze_nutrition(
         total_carbs_g=totals.carbs_g,
         total_fat_g=totals.fat_g,
         nutrients=all_nutrients,
+        food_items_json=food_items_json_str,
     )
 
     return NutritionAnalysisResponse(
