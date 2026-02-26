@@ -51,16 +51,15 @@ class SyncManager: ObservableObject {
         lastSyncStatus = .syncing
         lastError = nil
 
-        // Collect last 24h of data (or since last sync)
+        // Always sync from start of day — HealthKit cumulative stats (steps, calories)
+        // only return data within the queried window, so short incremental windows
+        // would miss most of the day's data. Sleep needs 2 days back to catch
+        // overnight sessions.
         let now = Date()
-        let startDate: Date
-        if let lastSync = settings.lastSyncDate {
-            startDate = lastSync
-        } else {
-            startDate = Calendar.current.date(byAdding: .day, value: -1, to: now)!
-        }
+        let startOfDay = Calendar.current.startOfDay(for: now)
+        let sleepStart = Calendar.current.date(byAdding: .day, value: -2, to: now)!
 
-        let payload = await healthManager.collectData(from: startDate, to: now)
+        let payload = await healthManager.collectData(from: startOfDay, to: now, sleepFrom: sleepStart)
 
         do {
             try await sendPayload(payload, settings: settings)

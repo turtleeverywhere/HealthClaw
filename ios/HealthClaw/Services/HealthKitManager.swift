@@ -62,10 +62,11 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Collect all data for a time range
 
-    func collectData(from startDate: Date, to endDate: Date) async -> HealthSyncPayload {
+    func collectData(from startDate: Date, to endDate: Date, sleepFrom: Date? = nil) async -> HealthSyncPayload {
+        let sleepStart = sleepFrom ?? startDate
         async let activity = fetchActivity(from: startDate, to: endDate)
         async let heart = fetchHeart(from: startDate, to: endDate)
-        async let sleep = fetchSleep(from: startDate, to: endDate)
+        async let sleep = fetchSleep(from: sleepStart, to: endDate)
         async let workouts = fetchWorkouts(from: startDate, to: endDate)
         async let body = fetchBody(from: startDate, to: endDate)
         async let vitals = fetchVitals(from: startDate, to: endDate)
