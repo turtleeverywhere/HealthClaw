@@ -8,9 +8,12 @@ the sessions_send RPC, which gives us full LLM access including vision.
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import os
 import subprocess
+import tempfile
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -22,12 +25,8 @@ from models import (
     NutritionTotals,
 )
 
-# Full path to openclaw CLI (systemd service doesn't inherit user PATH)
-OPENCLAW_BIN = os.getenv(
-    "OPENCLAW_BIN",
-    "/home/lars/.npm-global/bin/openclaw",
-)
-
+# Full path to openclaw CLI
+OPENCLAW_BIN = os.getenv("OPENCLAW_BIN", "/home/lars/.npm-global/bin/openclaw")
 GATEWAY_TOKEN = os.getenv(
     "OPENCLAW_GATEWAY_TOKEN",
     "f8ac08ae67eb64d576d08214be062d2fc74c31849e8463cb",
@@ -93,52 +92,72 @@ Return this exact JSON structure (fill in real values):
 Use your best nutritional knowledge to estimate values. Be realistic and accurate."""
 
 
-async def _call_agent(prompt: str) -> str:
+async def _call_agent(prompt: str, image_base64: str | None = None, image_mime_type: str | None = None) -> str:
     """
     Call an OpenClaw agent via CLI to get an LLM response.
+    For images: saves to a temp file and instructs the agent to use the image tool.
     Runs in a thread pool to avoid blocking the async event loop.
     """
     def _run():
-        import uuid
         session_id = f"nutrition-{uuid.uuid4().hex[:8]}"
+        temp_image_path = None
 
-        env = os.environ.copy()
-        env["OPENCLAW_GATEWAY_TOKEN"] = GATEWAY_TOKEN
-        env["PATH"] = "/home/lars/.npm-global/bin:" + env.get("PATH", "")
-
-        result = subprocess.run(
-            [
-                OPENCLAW_BIN, "agent",
-                "--session-id", session_id,
-                "--json",
-                "-m", prompt,
-                "--timeout", "120",
-            ],
-            capture_output=True,
-            text=True,
-            env=env,
-            timeout=150,
-        )
-
-        if result.returncode != 0:
-            raise RuntimeError(f"Agent call failed (code {result.returncode}): {result.stderr[:500]}")
-
-        # openclaw agent --json wraps result in { status, result: { payloads: [...] } }
-        output = result.stdout.strip()
         try:
-            data = json.loads(output)
-            # Navigate the wrapper: result.payloads[0].text
-            result_obj = data.get("result", data)
-            payloads = result_obj.get("payloads", [])
-            if payloads:
-                return payloads[0].get("text", output)
-            # Fallback to direct payloads at top level
-            payloads = data.get("payloads", [])
-            if payloads:
-                return payloads[0].get("text", output)
-            return output
-        except json.JSONDecodeError:
-            return output
+            # If image provided, save to temp file for the agent to read
+            if image_base64:
+                ext = "jpg"
+                if image_mime_type and "png" in image_mime_type:
+                    ext = "png"
+                temp_image_path = f"/tmp/healthclaw-food-{session_id}.{ext}"
+                with open(temp_image_path, "wb") as f:
+                    f.write(base64.b64decode(image_base64))
+
+                # Prepend image analysis instruction
+                prompt_with_image = (
+                    f"First, use the image tool to analyze the food photo at {temp_image_path}. "
+                    f"Then respond to this request:\n\n{prompt}"
+                )
+            else:
+                prompt_with_image = prompt
+
+            env = os.environ.copy()
+            env["OPENCLAW_GATEWAY_TOKEN"] = GATEWAY_TOKEN
+            env["PATH"] = "/home/lars/.npm-global/bin:" + env.get("PATH", "")
+
+            result = subprocess.run(
+                [
+                    OPENCLAW_BIN, "agent",
+                    "--session-id", session_id,
+                    "--json",
+                    "-m", prompt_with_image,
+                    "--timeout", "120",
+                ],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=150,
+            )
+
+            if result.returncode != 0:
+                raise RuntimeError(f"Agent call failed (code {result.returncode}): {result.stderr[:500]}")
+
+            output = result.stdout.strip()
+            try:
+                data = json.loads(output)
+                result_obj = data.get("result", data)
+                payloads = result_obj.get("payloads", [])
+                if payloads:
+                    return payloads[0].get("text", output)
+                payloads = data.get("payloads", [])
+                if payloads:
+                    return payloads[0].get("text", output)
+                return output
+            except json.JSONDecodeError:
+                return output
+        finally:
+            # Clean up temp image
+            if temp_image_path and os.path.exists(temp_image_path):
+                os.unlink(temp_image_path)
 
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _run)
@@ -199,18 +218,16 @@ async def analyze_nutrition(
     # Build the analysis prompt
     prompt = ANALYSIS_PROMPT_TEMPLATE.format(description=text)
 
-    # If an image was provided, note it in the prompt
-    # (Image analysis via CLI is limited — describe what's in the request)
+    # If an image was provided, adjust the description
     if image_base64:
-        mime = image_mime_type or "image/jpeg"
-        prompt = (
-            f"The user also provided a food photo ({mime}). "
-            "Use the text description to analyze the food.\n\n"
-            + prompt
-        )
+        if text and text.strip():
+            description = f"{text} (also see the attached food photo for details)"
+        else:
+            description = "See the attached food photo. Identify all visible food items and estimate portions."
+        prompt = ANALYSIS_PROMPT_TEMPLATE.format(description=description)
 
-    # Call the agent
-    raw_response = await _call_agent(prompt)
+    # Call agent (handles both text-only and image analysis)
+    raw_response = await _call_agent(prompt, image_base64, image_mime_type)
 
     # Parse the structured JSON
     data = _extract_json(raw_response)
