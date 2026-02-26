@@ -1,6 +1,7 @@
 """HealthClaw API server."""
 
 from contextlib import asynccontextmanager
+from datetime import date as date_type
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 
@@ -13,8 +14,19 @@ from database import (
     get_workouts,
     get_mood_entries,
     get_sleep_sessions,
+    get_meal_entry,
+    get_meal_history,
+    get_daily_nutrition_summary,
 )
-from models import HealthSyncPayload
+from models import (
+    DailyNutritionSummary,
+    HealthSyncPayload,
+    NutritionAnalysisRequest,
+    NutritionAnalysisResponse,
+    NutritionHistoryEntry,
+    NutrientSummaryItem,
+)
+from nutrition import analyze_nutrition
 
 
 @asynccontextmanager
@@ -103,6 +115,68 @@ async def list_sleep(
 async def ping():
     """Health check — no auth required."""
     return {"status": "ok"}
+
+
+# ── Nutrition endpoints ───────────────────────────────────────────────
+
+@app.post("/api/nutrition/analyze", response_model=NutritionAnalysisResponse)
+async def nutrition_analyze(
+    request: NutritionAnalysisRequest,
+    x_api_key: str = Header(...),
+):
+    """Analyze food from text (and optional image) using Claude. Stores the meal."""
+    verify_api_key(x_api_key)
+    try:
+        result = await analyze_nutrition(
+            text=request.text,
+            image_base64=request.image_base64,
+            image_mime_type=request.image_mime_type,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Nutrition analysis failed: {e}")
+
+
+@app.get("/api/nutrition/history")
+async def nutrition_history(
+    days: int = Query(default=7, ge=1, le=90),
+    x_api_key: str = Header(...),
+):
+    """Return meal entries for the last N days."""
+    verify_api_key(x_api_key)
+    entries = await get_meal_history(days)
+    return {"days": days, "meals": entries}
+
+
+@app.get("/api/nutrition/summary")
+async def nutrition_summary(
+    date: str = Query(default=None, description="Date in YYYY-MM-DD format"),
+    x_api_key: str = Header(...),
+):
+    """Return daily nutrition summary (totals across all meals for a date)."""
+    verify_api_key(x_api_key)
+    if date is None:
+        date = date_type.today().isoformat()
+    # Validate date format
+    try:
+        date_type.fromisoformat(date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format, expected YYYY-MM-DD")
+    summary = await get_daily_nutrition_summary(date)
+    return summary
+
+
+@app.get("/api/nutrition/meals/{meal_id}")
+async def nutrition_meal_detail(
+    meal_id: int,
+    x_api_key: str = Header(...),
+):
+    """Get a single meal entry with full nutrient details."""
+    verify_api_key(x_api_key)
+    meal = await get_meal_entry(meal_id)
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    return meal
 
 
 if __name__ == "__main__":

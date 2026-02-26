@@ -70,14 +70,42 @@ class HealthKitManager: ObservableObject {
         return types
     }
 
+    /// Quantity types the app requests WRITE permission for (dietary logging)
+    private var writeTypes: Set<HKSampleType> {
+        let ids: [HKQuantityTypeIdentifier] = [
+            .dietaryEnergyConsumed,
+            .dietaryProtein,
+            .dietaryCarbohydrates,
+            .dietaryFatTotal,
+            .dietaryFiber,
+            .dietarySugar,
+            .dietarySodium,
+        ]
+        return Set(ids.compactMap { HKQuantityType.quantityType(forIdentifier: $0) })
+    }
+
     func requestAuthorization() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         do {
-            try await store.requestAuthorization(toShare: [], read: readTypes)
+            try await store.requestAuthorization(toShare: writeTypes, read: readTypes)
             isAuthorized = true
         } catch {
             print("HealthKit auth error: \(error)")
         }
+    }
+
+    /// Write a single dietary quantity sample to HealthKit.
+    func writeDietarySample(
+        identifier: HKQuantityTypeIdentifier,
+        value: Double,
+        unit: HKUnit,
+        date: Date
+    ) async throws {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard let quantityType = HKQuantityType.quantityType(forIdentifier: identifier) else { return }
+        let quantity = HKQuantity(unit: unit, doubleValue: value)
+        let sample = HKQuantitySample(type: quantityType, quantity: quantity, start: date, end: date)
+        try await store.save(sample)
     }
 
     // MARK: - Collect all data for a time range
