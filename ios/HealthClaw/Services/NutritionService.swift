@@ -139,18 +139,23 @@ final class NutritionService {
 
     // MARK: - Write HealthKit Samples
 
-    /// Write all healthkit_samples from an analysis result into HealthKit.
-    func writeHealthKitSamples(from result: NutritionAnalysisResult) async throws {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
+    /// Write all healthkit_samples into HealthKit. Returns saved sample UUIDs.
+    func writeHealthKitSamples(from result: NutritionAnalysisResult) async throws -> [UUID] {
+        guard HKHealthStore.isHealthDataAvailable() else { return [] }
 
+        var savedUUIDs: [UUID] = []
         for sample in result.healthkitSamples {
-            let typeId = HKQuantityTypeIdentifier(rawValue: sample.identifier)
-            guard let quantityType = HKQuantityType.quantityType(forIdentifier: typeId) else {
+            guard let (typeId, expectedUnit) = Self.identifierMap[sample.identifier],
+                  let quantityType = HKQuantityType.quantityType(forIdentifier: typeId) else {
                 continue
             }
 
-            let unit = hkUnit(from: sample.unit)
-            let quantity = HKQuantity(unit: unit, doubleValue: sample.value)
+            // Skip samples where the server unit is incompatible (e.g. IU for mass-type nutrients)
+            let serverUnit = sample.unit.lowercased()
+            let isMassType = expectedUnit != .kilocalorie()
+            if isMassType && (serverUnit == "iu") { continue }
+
+            let quantity = HKQuantity(unit: expectedUnit, doubleValue: sample.value)
             let hkSample = HKQuantitySample(
                 type: quantityType,
                 quantity: quantity,
@@ -159,8 +164,81 @@ final class NutritionService {
             )
 
             try await healthStore.save(hkSample)
+            savedUUIDs.append(hkSample.uuid)
+        }
+        return savedUUIDs
+    }
+
+    // MARK: - Delete HealthKit Samples
+
+    /// Delete previously saved HK samples by their UUIDs.
+    func deleteHealthKitSamples(uuids: [UUID]) async throws {
+        guard HKHealthStore.isHealthDataAvailable(), !uuids.isEmpty else { return }
+
+        let predicate = HKQuery.predicateForObjects(with: Set(uuids))
+        try await deleteDietarySamples(matching: predicate)
+    }
+
+    /// Delete all dietary HK samples at a specific timestamp (fallback for history meals without tracked UUIDs).
+    func deleteHealthKitSamples(at timestamp: Date) async throws {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+
+        // Match samples whose start date is exactly this timestamp (±1s tolerance)
+        let from = timestamp.addingTimeInterval(-1)
+        let to = timestamp.addingTimeInterval(1)
+        let predicate = HKQuery.predicateForSamples(withStart: from, end: to, options: .strictStartDate)
+        try await deleteDietarySamples(matching: predicate)
+    }
+
+    /// Delete dietary samples matching a predicate across all dietary types.
+    private func deleteDietarySamples(matching predicate: NSPredicate) async throws {
+        for (_, (typeId, _)) in Self.identifierMap {
+            guard let quantityType = HKQuantityType.quantityType(forIdentifier: typeId) else { continue }
+
+            let samples: [HKSample] = await withCheckedContinuation { cont in
+                let query = HKSampleQuery(
+                    sampleType: quantityType,
+                    predicate: predicate,
+                    limit: HKObjectQueryNoLimit,
+                    sortDescriptors: nil
+                ) { _, results, _ in
+                    cont.resume(returning: results ?? [])
+                }
+                healthStore.execute(query)
+            }
+
+            if !samples.isEmpty {
+                try await healthStore.delete(samples)
+            }
         }
     }
+
+    // MARK: - Server identifier → HKQuantityTypeIdentifier
+
+    /// Maps server identifier → (HK type, correct HK unit).
+    /// Using fixed units avoids crashes from incompatible units (e.g. IU for mass types).
+    static let identifierMap: [String: (HKQuantityTypeIdentifier, HKUnit)] = [
+        "dietaryEnergyConsumed": (.dietaryEnergyConsumed, .kilocalorie()),
+        "dietaryProtein":        (.dietaryProtein, .gram()),
+        "dietaryCarbohydrates":  (.dietaryCarbohydrates, .gram()),
+        "dietaryFatTotal":       (.dietaryFatTotal, .gram()),
+        "dietaryFatSaturated":   (.dietaryFatSaturated, .gram()),
+        "dietaryFiber":          (.dietaryFiber, .gram()),
+        "dietarySugar":          (.dietarySugar, .gram()),
+        "dietarySodium":         (.dietarySodium, .gramUnit(with: .milli)),
+        "dietaryCholesterol":    (.dietaryCholesterol, .gramUnit(with: .milli)),
+        "dietaryCalcium":        (.dietaryCalcium, .gramUnit(with: .milli)),
+        "dietaryIron":           (.dietaryIron, .gramUnit(with: .milli)),
+        "dietaryVitaminC":       (.dietaryVitaminC, .gramUnit(with: .milli)),
+        "dietaryVitaminD":       (.dietaryVitaminD, .gramUnit(with: .micro)),
+        "dietaryPotassium":      (.dietaryPotassium, .gramUnit(with: .milli)),
+        "dietaryMagnesium":      (.dietaryMagnesium, .gramUnit(with: .milli)),
+        "dietaryVitaminA":       (.dietaryVitaminA, .gramUnit(with: .micro)),
+        "dietaryVitaminB6":      (.dietaryVitaminB6, .gramUnit(with: .milli)),
+        "dietaryVitaminB12":     (.dietaryVitaminB12, .gramUnit(with: .micro)),
+        "dietaryFolate":         (.dietaryFolate, .gramUnit(with: .micro)),
+        "dietaryZinc":           (.dietaryZinc, .gramUnit(with: .milli)),
+    ]
 
     // MARK: - Helpers
 
@@ -171,8 +249,7 @@ final class NutritionService {
         return f.string(from: date)
     }
 
-    private func hkUnit(from string: String) -> HKUnit {
-        // Map common server-side unit strings to HKUnit
+    private func hkUnit(from string: String) -> HKUnit? {
         switch string.lowercased() {
         case "kcal", "kilocalorie", "kilocalories":
             return .kilocalorie()
@@ -184,9 +261,10 @@ final class NutritionService {
             return HKUnit.gramUnit(with: .micro)
         case "ml", "milliliter", "milliliters":
             return HKUnit.literUnit(with: .milli)
+        case "iu":
+            return .internationalUnit()
         default:
-            // Attempt to parse directly as an HKUnit string
-            return HKUnit(from: string)
+            return nil
         }
     }
 }

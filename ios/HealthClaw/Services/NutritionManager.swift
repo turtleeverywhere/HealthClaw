@@ -19,7 +19,6 @@ final class NutritionManager: ObservableObject {
 
     // MARK: - Configuration
 
-    /// Call this once (e.g. from HealthClawApp) to inject dependencies.
     func configure(settings: AppSettings, healthManager: HealthKitManager) {
         self.service = NutritionService(settings: settings)
         self.healthManager = healthManager
@@ -33,7 +32,6 @@ final class NutritionManager: ObservableObject {
             return
         }
 
-        // 1. Append the user message immediately
         let userMessage = NutritionChatMessage(
             role: .user,
             text: text,
@@ -45,10 +43,11 @@ final class NutritionManager: ObservableObject {
         errorMessage = nil
 
         do {
-            // 2. Call the server
-            let result = try await service.analyzeFood(text: text, imageData: imageData)
+            var result = try await service.analyzeFood(text: text, imageData: imageData)
 
-            // 3. Build assistant reply text
+            let uuids = try await service.writeHealthKitSamples(from: result)
+            result.savedHKSampleUUIDs = uuids
+
             let replyText = result.description.isEmpty
                 ? "Here's the nutritional breakdown for your meal:"
                 : result.description
@@ -60,13 +59,7 @@ final class NutritionManager: ObservableObject {
             )
             withAnimation { messages.append(assistantMessage) }
 
-            // 4. Add to recent meals (most-recent first)
             recentMeals.insert(result, at: 0)
-
-            // 5. Auto-write to HealthKit
-            await writeToHealthKit(result: result)
-
-            // 6. Refresh daily summary
             await refreshSummary()
 
         } catch {
@@ -81,6 +74,108 @@ final class NutritionManager: ObservableObject {
         isAnalyzing = false
     }
 
+    // MARK: - Update Meal (from chat)
+
+    func updateMeal(messageId: UUID, updatedResult: NutritionAnalysisResult) async {
+        guard let service else { return }
+
+        guard let idx = messages.firstIndex(where: { $0.id == messageId }),
+              let oldResult = messages[idx].analysisResult else { return }
+
+        var result = updatedResult
+        result.recalculate()
+
+        do {
+            try await deleteHKSamples(for: oldResult)
+
+            let newUUIDs = try await service.writeHealthKitSamples(from: result)
+            result.savedHKSampleUUIDs = newUUIDs
+
+            withAnimation { messages[idx].analysisResult = result }
+
+            if let mealIdx = recentMeals.firstIndex(where: { $0.mealId == result.mealId }) {
+                recentMeals[mealIdx] = result
+            }
+
+            await refreshSummary()
+        } catch {
+            print("[NutritionManager] Update failed: \(error.localizedDescription)")
+            errorMessage = "Failed to update meal: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Update Meal (from history, no chat message)
+
+    func updateMealFromHistory(updatedResult: NutritionAnalysisResult, originalResult: NutritionAnalysisResult) async {
+        guard let service else { return }
+
+        var result = updatedResult
+        result.recalculate()
+
+        do {
+            try await deleteHKSamples(for: originalResult)
+
+            let newUUIDs = try await service.writeHealthKitSamples(from: result)
+            result.savedHKSampleUUIDs = newUUIDs
+
+            // Update in recentMeals
+            if let mealIdx = recentMeals.firstIndex(where: { $0.mealId == result.mealId }) {
+                recentMeals[mealIdx] = result
+            }
+
+            // Also update in chat if it exists there
+            if let msgIdx = messages.firstIndex(where: { $0.analysisResult?.mealId == result.mealId }) {
+                withAnimation { messages[msgIdx].analysisResult = result }
+            }
+
+            await refreshSummary()
+        } catch {
+            print("[NutritionManager] History update failed: \(error.localizedDescription)")
+            errorMessage = "Failed to update meal: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Delete Meal (from chat)
+
+    func deleteMeal(messageId: UUID) async {
+        guard service != nil else { return }
+
+        guard let idx = messages.firstIndex(where: { $0.id == messageId }),
+              let result = messages[idx].analysisResult else { return }
+
+        try? await deleteHKSamples(for: result)
+
+        withAnimation {
+            messages.remove(at: idx)
+            if idx > 0 && messages[idx - 1].role == .user {
+                messages.remove(at: idx - 1)
+            }
+        }
+
+        recentMeals.removeAll { $0.mealId == result.mealId }
+        await refreshSummary()
+    }
+
+    // MARK: - Delete Meal (from history)
+
+    func deleteMealFromHistory(result: NutritionAnalysisResult) async {
+        try? await deleteHKSamples(for: result)
+
+        recentMeals.removeAll { $0.mealId == result.mealId }
+
+        // Also remove from chat if present
+        if let msgIdx = messages.firstIndex(where: { $0.analysisResult?.mealId == result.mealId }) {
+            withAnimation {
+                messages.remove(at: msgIdx)
+                if msgIdx > 0 && messages[msgIdx - 1].role == .user {
+                    messages.remove(at: msgIdx - 1)
+                }
+            }
+        }
+
+        await refreshSummary()
+    }
+
     // MARK: - Refresh Summary
 
     func refreshSummary() async {
@@ -88,7 +183,6 @@ final class NutritionManager: ObservableObject {
         do {
             todaySummary = try await service.fetchDailySummary(date: Date())
         } catch {
-            // Non-fatal: summary may not be available
             print("[NutritionManager] Summary fetch failed: \(error.localizedDescription)")
         }
     }
@@ -104,20 +198,21 @@ final class NutritionManager: ObservableObject {
         }
     }
 
-    // MARK: - Write to HealthKit
-
-    func writeToHealthKit(result: NutritionAnalysisResult) async {
-        guard let service else { return }
-        do {
-            try await service.writeHealthKitSamples(from: result)
-        } catch {
-            print("[NutritionManager] HealthKit write failed: \(error.localizedDescription)")
-        }
-    }
-
     // MARK: - Clear Conversation
 
     func clearConversation() {
         messages.removeAll()
+    }
+
+    // MARK: - Private
+
+    /// Delete HK samples for a result — uses tracked UUIDs if available, falls back to timestamp.
+    private func deleteHKSamples(for result: NutritionAnalysisResult) async throws {
+        guard let service else { return }
+        if !result.savedHKSampleUUIDs.isEmpty {
+            try await service.deleteHealthKitSamples(uuids: result.savedHKSampleUUIDs)
+        } else {
+            try await service.deleteHealthKitSamples(at: result.timestamp)
+        }
     }
 }

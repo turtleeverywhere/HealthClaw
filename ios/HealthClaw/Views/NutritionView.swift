@@ -5,6 +5,7 @@ import PhotosUI
 
 struct NutritionView: View {
     @EnvironmentObject private var nutritionManager: NutritionManager
+    @State private var showingHistory = false
 
     var body: some View {
         ZStack {
@@ -19,8 +20,9 @@ struct NutritionView: View {
                     Spacer()
                     Button {
                         Task { await nutritionManager.loadRecentMeals() }
+                        showingHistory = true
                     } label: {
-                        Image(systemName: "arrow.clockwise")
+                        Image(systemName: "list.bullet.clipboard")
                             .foregroundStyle(.white.opacity(0.7))
                     }
                 }
@@ -36,8 +38,15 @@ struct NutritionView: View {
                 }
             }
         }
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .task {
             await nutritionManager.refreshSummary()
+        }
+        .sheet(isPresented: $showingHistory) {
+            MealHistoryView()
+                .environmentObject(nutritionManager)
         }
     }
 }
@@ -162,6 +171,15 @@ struct NutritionChatSection: View {
     @State private var selectedImageData: Data? = nil
     @State private var showingPhotoPicker = false
 
+    // Edit/delete state lifted out of ForEach
+    @State private var editingMessageId: UUID? = nil
+    @State private var deletingMessageId: UUID? = nil
+
+    private var editingResult: NutritionAnalysisResult? {
+        guard let id = editingMessageId else { return nil }
+        return nutritionManager.messages.first(where: { $0.id == id })?.analysisResult
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Messages list
@@ -173,8 +191,12 @@ struct NutritionChatSection: View {
                                 .padding(.top, 40)
                         } else {
                             ForEach(nutritionManager.messages) { message in
-                                ChatBubble(message: message)
-                                    .id(message.id)
+                                ChatBubble(
+                                    message: message,
+                                    onEdit: { editingMessageId = message.id },
+                                    onDelete: { deletingMessageId = message.id }
+                                )
+                                .id(message.id)
                             }
                         }
 
@@ -277,6 +299,29 @@ struct NutritionChatSection: View {
                 alignment: .top
             )
         }
+        .sheet(isPresented: .init(
+            get: { editingMessageId != nil },
+            set: { if !$0 { editingMessageId = nil } }
+        )) {
+            if let msgId = editingMessageId, let result = editingResult {
+                MealEditSheet(messageId: msgId, result: result)
+                    .environmentObject(nutritionManager)
+            }
+        }
+        .alert("Delete Meal", isPresented: .init(
+            get: { deletingMessageId != nil },
+            set: { if !$0 { deletingMessageId = nil } }
+        )) {
+            Button("Delete", role: .destructive) {
+                if let id = deletingMessageId {
+                    Task { await nutritionManager.deleteMeal(messageId: id) }
+                }
+                deletingMessageId = nil
+            }
+            Button("Cancel", role: .cancel) { deletingMessageId = nil }
+        } message: {
+            Text("This will remove the meal and its HealthKit data.")
+        }
     }
 
     private var canSend: Bool {
@@ -306,6 +351,8 @@ struct NutritionChatSection: View {
 
 struct ChatBubble: View {
     let message: NutritionChatMessage
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
 
     var isUser: Bool { message.role == .user }
 
@@ -344,7 +391,11 @@ struct ChatBubble: View {
 
                 // Nutrition result card for assistant messages
                 if let result = message.analysisResult {
-                    NutritionResultCard(result: result)
+                    NutritionResultCard(
+                        result: result,
+                        onEdit: onEdit,
+                        onDelete: onDelete
+                    )
                 }
 
                 // Timestamp
@@ -368,10 +419,39 @@ struct ChatBubble: View {
 
 struct NutritionResultCard: View {
     let result: NutritionAnalysisResult
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
     @State private var showingMicronutrients = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Action buttons
+            if onEdit != nil || onDelete != nil {
+                HStack {
+                    Spacer()
+                    if let onEdit {
+                        Button { onEdit() } label: {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white.opacity(0.5))
+                                .frame(width: 28, height: 28)
+                                .background(Color.white.opacity(0.08))
+                                .clipShape(Circle())
+                        }
+                    }
+                    if let onDelete {
+                        Button { onDelete() } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.red.opacity(0.7))
+                                .frame(width: 28, height: 28)
+                                .background(Color.red.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                    }
+                }
+            }
+
             // Macro summary row
             HStack(spacing: 0) {
                 MacroStat(value: result.totals.calories, label: "kcal", color: .white)
@@ -454,6 +534,287 @@ struct NutritionResultCard: View {
     }
 }
 
+// MARK: - Meal Edit Sheet
+
+struct MealEditSheet: View {
+    @EnvironmentObject private var nutritionManager: NutritionManager
+    @Environment(\.dismiss) private var dismiss
+
+    let messageId: UUID
+    @State private var editedResult: NutritionAnalysisResult
+    @State private var editingItemId: UUID? = nil
+
+    init(messageId: UUID, result: NutritionAnalysisResult) {
+        self.messageId = messageId
+        _editedResult = State(initialValue: result)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Live totals preview
+                        EditTotalsCard(result: editedResult)
+
+                        // Food items
+                        VStack(spacing: 0) {
+                            ForEach($editedResult.foodItems) { $item in
+                                FoodItemEditRow(
+                                    item: $item,
+                                    isExpanded: editingItemId == item.itemId,
+                                    onTap: {
+                                        withAnimation(.spring(duration: 0.25)) {
+                                            editingItemId = editingItemId == item.itemId ? nil : item.itemId
+                                        }
+                                    },
+                                    onDelete: {
+                                        withAnimation {
+                                            editedResult.foodItems.removeAll { $0.itemId == item.itemId }
+                                            editedResult.recalculate()
+                                        }
+                                    }
+                                )
+
+                                if item.itemId != editedResult.foodItems.last?.itemId {
+                                    Divider().background(Color.cardBorder)
+                                }
+                            }
+                        }
+                        .background(Color.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.cardBorder, lineWidth: 0.5)
+                        )
+                    }
+                    .padding(16)
+                }
+            }
+            .navigationTitle("Edit Meal")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            await nutritionManager.updateMeal(messageId: messageId, updatedResult: editedResult)
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.large])
+        .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Edit Totals Card
+
+struct EditTotalsCard: View {
+    let result: NutritionAnalysisResult
+
+    var body: some View {
+        HStack(spacing: 0) {
+            MacroStat(value: result.totals.calories, label: "kcal", color: .white)
+            Divider().frame(height: 30).background(Color.cardBorder)
+            MacroStat(value: result.totals.proteinG, label: "protein", color: .blue)
+            Divider().frame(height: 30).background(Color.cardBorder)
+            MacroStat(value: result.totals.carbsG, label: "carbs", color: .orange)
+            Divider().frame(height: 30).background(Color.cardBorder)
+            MacroStat(value: result.totals.fatG, label: "fat", color: .yellow)
+        }
+        .padding(.vertical, 14)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.cardBorder, lineWidth: 0.5)
+        )
+    }
+}
+
+// MARK: - Food Item Edit Row
+
+struct FoodItemEditRow: View {
+    @Binding var item: FoodItem
+    let isExpanded: Bool
+    let onTap: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Summary row — always visible
+            Button(action: onTap) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(item.name)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.white)
+                        Text(item.portion)
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    Spacer()
+                    Text("\(Int(item.calories)) kcal")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.8))
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.35))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // Expanded edit fields
+            if isExpanded {
+                VStack(spacing: 10) {
+                    EditTextField(label: "Name", text: $item.name)
+                    EditTextField(label: "Portion", text: $item.portion)
+                    EditNumberField(label: "Calories", value: $item.calories, unit: "kcal")
+                    EditNumberField(label: "Protein", value: $item.proteinG, unit: "g")
+                    EditNumberField(label: "Carbs", value: $item.carbsG, unit: "g")
+                    EditNumberField(label: "Fat", value: $item.fatG, unit: "g")
+                    EditOptionalNumberField(label: "Fiber", value: $item.fiberG, unit: "g")
+                    EditOptionalNumberField(label: "Sugar", value: $item.sugarG, unit: "g")
+                    EditOptionalNumberField(label: "Sodium", value: $item.sodiumMg, unit: "mg")
+
+                    Button(role: .destructive) {
+                        onDelete()
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Remove item")
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 12)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+}
+
+// MARK: - Edit Field Helpers
+
+struct EditTextField: View {
+    let label: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 70, alignment: .leading)
+            TextField(label, text: $text)
+                .font(.system(size: 14))
+                .foregroundStyle(.white)
+                .tint(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
+}
+
+struct EditNumberField: View {
+    let label: String
+    @Binding var value: Double
+    let unit: String
+
+    @State private var text: String = ""
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 70, alignment: .leading)
+            TextField(label, text: $text)
+                .font(.system(size: 14))
+                .foregroundStyle(.white)
+                .tint(.white)
+                .keyboardType(.decimalPad)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .onChange(of: text) { _, newVal in
+                    if let v = Double(newVal) { value = v }
+                }
+            Text(unit)
+                .font(.system(size: 12))
+                .foregroundStyle(.white.opacity(0.4))
+                .frame(width: 30)
+        }
+        .onAppear { text = formatNumber(value) }
+    }
+}
+
+struct EditOptionalNumberField: View {
+    let label: String
+    @Binding var value: Double?
+    let unit: String
+
+    @State private var text: String = ""
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 70, alignment: .leading)
+            TextField(label, text: $text)
+                .font(.system(size: 14))
+                .foregroundStyle(.white)
+                .tint(.white)
+                .keyboardType(.decimalPad)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .onChange(of: text) { _, newVal in
+                    if newVal.isEmpty {
+                        value = nil
+                    } else if let v = Double(newVal) {
+                        value = v
+                    }
+                }
+            Text(unit)
+                .font(.system(size: 12))
+                .foregroundStyle(.white.opacity(0.4))
+                .frame(width: 30)
+        }
+        .onAppear { text = value.map { formatNumber($0) } ?? "" }
+    }
+}
+
+private func formatNumber(_ v: Double) -> String {
+    v.truncatingRemainder(dividingBy: 1) == 0
+        ? String(format: "%.0f", v)
+        : String(format: "%.1f", v)
+}
+
 // MARK: - Macro Stat (inside result card)
 
 struct MacroStat: View {
@@ -526,6 +887,245 @@ struct TypingIndicator: View {
             Spacer(minLength: 60)
         }
         .onAppear { phase = 1 }
+    }
+}
+
+// MARK: - Meal History View
+
+struct MealHistoryView: View {
+    @EnvironmentObject private var nutritionManager: NutritionManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var editingMeal: NutritionAnalysisResult? = nil
+    @State private var deletingMeal: NutritionAnalysisResult? = nil
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+
+                if nutritionManager.recentMeals.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 40))
+                            .foregroundStyle(.white.opacity(0.2))
+                        Text("No meals logged yet")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(nutritionManager.recentMeals) { meal in
+                                MealHistoryRow(
+                                    meal: meal,
+                                    onEdit: { editingMeal = meal },
+                                    onDelete: { deletingMeal = meal }
+                                )
+                            }
+                        }
+                        .padding(16)
+                    }
+                }
+            }
+            .navigationTitle("Meal History")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+            }
+            .sheet(item: $editingMeal) { meal in
+                HistoryMealEditSheet(result: meal)
+                    .environmentObject(nutritionManager)
+            }
+            .alert("Delete Meal", isPresented: .init(
+                get: { deletingMeal != nil },
+                set: { if !$0 { deletingMeal = nil } }
+            )) {
+                Button("Delete", role: .destructive) {
+                    if let meal = deletingMeal {
+                        Task { await nutritionManager.deleteMealFromHistory(result: meal) }
+                    }
+                    deletingMeal = nil
+                }
+                Button("Cancel", role: .cancel) { deletingMeal = nil }
+            } message: {
+                Text("This will remove the meal and its HealthKit data.")
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Meal History Row
+
+struct MealHistoryRow: View {
+    let meal: NutritionAnalysisResult
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Header: description + timestamp
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(meal.description)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                    Text(dateString(from: meal.timestamp))
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+                Spacer()
+                HStack(spacing: 6) {
+                    Button { onEdit() } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(Circle())
+                    }
+                    Button { onDelete() } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.red.opacity(0.7))
+                            .frame(width: 28, height: 28)
+                            .background(Color.red.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                }
+            }
+
+            // Macros
+            HStack(spacing: 0) {
+                MacroStat(value: meal.totals.calories, label: "kcal", color: .white)
+                Divider().frame(height: 24).background(Color.cardBorder)
+                MacroStat(value: meal.totals.proteinG, label: "protein", color: .blue)
+                Divider().frame(height: 24).background(Color.cardBorder)
+                MacroStat(value: meal.totals.carbsG, label: "carbs", color: .orange)
+                Divider().frame(height: 24).background(Color.cardBorder)
+                MacroStat(value: meal.totals.fatG, label: "fat", color: .yellow)
+            }
+
+            // Food item names
+            HStack(spacing: 6) {
+                ForEach(meal.foodItems.prefix(4)) { item in
+                    Text(item.name)
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(Capsule())
+                }
+                if meal.foodItems.count > 4 {
+                    Text("+\(meal.foodItems.count - 4)")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+            }
+        }
+        .padding(14)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.cardBorder, lineWidth: 0.5)
+        )
+    }
+
+    private func dateString(from date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, h:mm a"
+        return f.string(from: date)
+    }
+}
+
+// MARK: - History Meal Edit Sheet
+
+struct HistoryMealEditSheet: View {
+    @EnvironmentObject private var nutritionManager: NutritionManager
+    @Environment(\.dismiss) private var dismiss
+
+    let originalResult: NutritionAnalysisResult
+    @State private var editedResult: NutritionAnalysisResult
+    @State private var editingItemId: UUID? = nil
+
+    init(result: NutritionAnalysisResult) {
+        self.originalResult = result
+        _editedResult = State(initialValue: result)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 16) {
+                        EditTotalsCard(result: editedResult)
+
+                        VStack(spacing: 0) {
+                            ForEach($editedResult.foodItems) { $item in
+                                FoodItemEditRow(
+                                    item: $item,
+                                    isExpanded: editingItemId == item.itemId,
+                                    onTap: {
+                                        withAnimation(.spring(duration: 0.25)) {
+                                            editingItemId = editingItemId == item.itemId ? nil : item.itemId
+                                        }
+                                    },
+                                    onDelete: {
+                                        withAnimation {
+                                            editedResult.foodItems.removeAll { $0.itemId == item.itemId }
+                                            editedResult.recalculate()
+                                        }
+                                    }
+                                )
+
+                                if item.itemId != editedResult.foodItems.last?.itemId {
+                                    Divider().background(Color.cardBorder)
+                                }
+                            }
+                        }
+                        .background(Color.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.cardBorder, lineWidth: 0.5)
+                        )
+                    }
+                    .padding(16)
+                }
+            }
+            .navigationTitle("Edit Meal")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            await nutritionManager.updateMealFromHistory(
+                                updatedResult: editedResult,
+                                originalResult: originalResult
+                            )
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.large])
+        .preferredColorScheme(.dark)
     }
 }
 

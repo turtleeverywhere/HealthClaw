@@ -77,9 +77,22 @@ class HealthKitManager: ObservableObject {
             .dietaryProtein,
             .dietaryCarbohydrates,
             .dietaryFatTotal,
+            .dietaryFatSaturated,
             .dietaryFiber,
             .dietarySugar,
             .dietarySodium,
+            .dietaryCholesterol,
+            .dietaryCalcium,
+            .dietaryIron,
+            .dietaryVitaminC,
+            .dietaryVitaminD,
+            .dietaryPotassium,
+            .dietaryMagnesium,
+            .dietaryVitaminA,
+            .dietaryVitaminB6,
+            .dietaryVitaminB12,
+            .dietaryFolate,
+            .dietaryZinc,
         ]
         return Set(ids.compactMap { HKQuantityType.quantityType(forIdentifier: $0) })
     }
