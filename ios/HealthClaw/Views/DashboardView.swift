@@ -442,7 +442,7 @@ struct HRVCard: View {
     let history: [Double]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             HStack(spacing: 4) {
                 Image(systemName: "waveform.path.ecg")
                     .foregroundStyle(.purple)
@@ -468,7 +468,7 @@ struct HRVCard: View {
                 TrendLabel(data: history)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .cardStyle()
     }
 }
@@ -480,7 +480,7 @@ struct RHRCard: View {
     let history: [Double]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             HStack(spacing: 4) {
                 Image(systemName: "heart.fill")
                     .foregroundStyle(.red)
@@ -502,7 +502,7 @@ struct RHRCard: View {
             SemiGaugeView(value: value, minValue: 35, maxValue: 100)
                 .frame(height: 50)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .cardStyle()
     }
 
@@ -526,33 +526,29 @@ struct WeightCard: View {
     let history: [Double]
 
     var body: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    Image(systemName: "scalemass.fill")
-                        .foregroundStyle(.teal)
-                    Text("Weight")
-                        .font(.headline)
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(String(format: "%.1f", value))
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                    Text("kg")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                if history.count >= 2 {
-                    TrendLabel(data: history)
-                }
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "scalemass.fill")
+                    .foregroundStyle(.teal)
+                Text("Weight")
+                    .font(.headline)
             }
-
-            Spacer()
-
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(String(format: "%.1f", value))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                Text("kg")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
             if history.count >= 2 {
                 SparklineView(data: history, color: .teal)
-                    .frame(width: 140, height: 60)
+                    .frame(height: 60)
+            }
+            if history.count >= 2 {
+                TrendLabel(data: history)
             }
         }
+        .frame(maxWidth: .infinity)
         .cardStyle()
     }
 }
@@ -564,7 +560,7 @@ struct BodyFatCard: View {
     let history: [Double]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             HStack(spacing: 4) {
                 Image(systemName: "percent")
                     .foregroundStyle(.orange)
@@ -586,7 +582,7 @@ struct BodyFatCard: View {
             SemiGaugeView(value: value, minValue: 5, maxValue: 40)
                 .frame(height: 50)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .cardStyle()
     }
 
@@ -609,7 +605,7 @@ struct BMICard: View {
     let value: Double
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             HStack(spacing: 4) {
                 Image(systemName: "figure.stand")
                     .foregroundStyle(.mint)
@@ -627,7 +623,7 @@ struct BMICard: View {
 
             Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .cardStyle()
     }
 
@@ -650,7 +646,7 @@ struct VitalsCard: View {
     let vitals: VitalsData
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "heart.text.square.fill")
                     .foregroundStyle(.pink)
@@ -658,7 +654,7 @@ struct VitalsCard: View {
                     .font(.headline)
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            HStack(spacing: 12) {
                 if let spo2 = vitals.bloodOxygenPct {
                     VitalTile(icon: "lungs.fill", label: "SpO\u{2082}", value: String(format: "%.0f%%", spo2), color: .cyan)
                 }
