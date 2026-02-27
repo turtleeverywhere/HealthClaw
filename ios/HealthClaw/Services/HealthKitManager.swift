@@ -325,6 +325,9 @@ class HealthKitManager: ObservableObject {
                     return
                 }
 
+                // Collect in-bed samples separately to compute in-bed duration per session
+                var inBedSamples: [(start: Date, end: Date)] = []
+
                 // Group into sessions: samples within 30 min gap = same session
                 var sessions: [SleepSession] = []
                 var currentStages: [SleepStage] = []
@@ -343,11 +346,13 @@ class HealthKitManager: ObservableObject {
                     default: stageName = "unknown"
                     }
 
-                    if stageName == "in_bed" { continue }
+                    if stageName == "in_bed" {
+                        inBedSamples.append((start: sample.startDate, end: sample.endDate))
+                        continue
+                    }
 
                     let gap = lastEnd.map { sample.startDate.timeIntervalSince($0) } ?? 0
                     if gap > 1800, !currentStages.isEmpty, let sStart = sessionStart {
-                        // Finalize previous session
                         let sEnd = lastEnd ?? sStart
                         let total = sEnd.timeIntervalSince(sStart) / 60.0
                         sessions.append(SleepSession(start: sStart, end: sEnd, totalDurationMin: total, stages: currentStages))
@@ -367,6 +372,16 @@ class HealthKitManager: ObservableObject {
                     let sEnd = lastEnd ?? sStart
                     let total = sEnd.timeIntervalSince(sStart) / 60.0
                     sessions.append(SleepSession(start: sStart, end: sEnd, totalDurationMin: total, stages: currentStages))
+                }
+
+                // Match in-bed samples to sessions by overlap
+                for i in sessions.indices {
+                    let s = sessions[i]
+                    let overlapping = inBedSamples.filter { $0.start < s.end && $0.end > s.start }
+                    if !overlapping.isEmpty {
+                        let inBedMin = overlapping.reduce(0.0) { $0 + $1.end.timeIntervalSince($1.start) / 60.0 }
+                        sessions[i].inBedDurationMin = inBedMin
+                    }
                 }
 
                 continuation.resume(returning: sessions)
