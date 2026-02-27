@@ -170,6 +170,7 @@ struct NutritionChatSection: View {
     @State private var selectedImage: PhotosPickerItem? = nil
     @State private var selectedImageData: Data? = nil
     @State private var showingPhotoPicker = false
+    @State private var showingCamera = false
 
     // Edit/delete state lifted out of ForEach
     @State private var editingMessageId: UUID? = nil
@@ -255,15 +256,34 @@ struct NutritionChatSection: View {
 
             // Input bar
             HStack(spacing: 10) {
-                PhotosPicker(selection: $selectedImage,
-                             matching: .images,
-                             photoLibrary: .shared()) {
+                Menu {
+                    Button {
+                        showingCamera = true
+                    } label: {
+                        Label("Take Photo", systemImage: "camera")
+                    }
+                    Button {
+                        showingPhotoPicker = true
+                    } label: {
+                        Label("Photo Library", systemImage: "photo.on.rectangle")
+                    }
+                } label: {
                     Image(systemName: selectedImageData != nil
                           ? "photo.fill"
                           : "camera.fill")
                         .font(.system(size: 20))
                         .foregroundStyle(selectedImageData != nil ? .green : .white.opacity(0.7))
                         .frame(width: 36, height: 36)
+                }
+                .photosPicker(isPresented: $showingPhotoPicker,
+                              selection: $selectedImage,
+                              matching: .images,
+                              photoLibrary: .shared())
+                .fullScreenCover(isPresented: $showingCamera) {
+                    CameraPicker { data in
+                        selectedImageData = data
+                    }
+                    .ignoresSafeArea()
                 }
                 .onChange(of: selectedImage) { _, item in
                     Task {
@@ -1147,6 +1167,42 @@ struct EmptyStateView: View {
                 .foregroundStyle(.white.opacity(0.35))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
+        }
+    }
+}
+
+// MARK: - Camera Picker
+
+struct CameraPicker: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    var onCapture: (Data) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraPicker
+        init(_ parent: CameraPicker) { self.parent = parent }
+
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage,
+               let data = image.jpegData(compressionQuality: 0.8) {
+                parent.onCapture(data)
+            }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }
