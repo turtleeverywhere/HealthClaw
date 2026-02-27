@@ -621,7 +621,8 @@ struct BMICard: View {
 
             bmiStatus
 
-            Spacer(minLength: 0)
+            SemiGaugeView(value: value, minValue: 15, maxValue: 40)
+                .frame(height: 50)
         }
         .frame(maxWidth: .infinity)
         .cardStyle()
