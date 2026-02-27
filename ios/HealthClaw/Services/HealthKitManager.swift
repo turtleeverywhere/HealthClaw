@@ -236,7 +236,8 @@ class HealthKitManager: ObservableObject {
 
         todayActivity = await a
         todayHeart = await h
-        recentSleep = await s
+        // Filter sleep by wake-up date: only keep sessions ending within the requested range
+        recentSleep = (await s).filter { $0.end >= start && $0.end <= end }
         recentWorkouts = await w
         bodyData = await b
         vitalsData = await v
