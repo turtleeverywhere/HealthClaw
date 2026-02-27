@@ -89,7 +89,8 @@ async def init_db() -> None:
                 total_duration_min REAL,
                 in_bed_duration_min REAL,
                 stages_json TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(date, start_time)
             );
 
             CREATE TABLE IF NOT EXISTS meal_entries (
@@ -127,6 +128,20 @@ async def init_db() -> None:
             await db.execute("ALTER TABLE meal_entries ADD COLUMN food_items_json TEXT")
         except Exception:
             pass  # column already exists
+
+        # Migration: deduplicate sleep_sessions and add unique constraint
+        try:
+            await db.execute("""
+                DELETE FROM sleep_sessions WHERE id NOT IN (
+                    SELECT MIN(id) FROM sleep_sessions GROUP BY date, start_time
+                )
+            """)
+            await db.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_sleep_unique ON sleep_sessions(date, start_time)"
+            )
+        except Exception:
+            pass  # already migrated
+
         await db.commit()
 
 
@@ -153,20 +168,20 @@ async def store_sync(payload: HealthSyncPayload) -> int:
         body = payload.body
         vitals = payload.vitals
 
-        # Calculate sleep totals
-        sleep_total = sum(s.total_duration_min for s in payload.sleep)
-        deep_total = sum(
-            st.duration_min for s in payload.sleep for st in s.stages if st.stage == "deep"
-        )
-        rem_total = sum(
-            st.duration_min for s in payload.sleep for st in s.stages if st.stage == "rem"
-        )
-        core_total = sum(
-            st.duration_min for s in payload.sleep for st in s.stages if st.stage == "core"
-        )
-        awake_total = sum(
-            st.duration_min for s in payload.sleep for st in s.stages if st.stage == "awake"
-        )
+        # Calculate sleep totals — use the longest session whose wake-up (end)
+        # falls on the summary date, to avoid double-counting overlapping
+        # Apple Health sources (iPhone + Watch) and to attribute overnight
+        # sleep to the correct day
+        date_sleeps = [s for s in payload.sleep if s.end.strftime("%Y-%m-%d") == date_str]
+        if date_sleeps:
+            longest_sleep = max(date_sleeps, key=lambda s: s.total_duration_min)
+            sleep_total = longest_sleep.total_duration_min
+            deep_total = sum(st.duration_min for st in longest_sleep.stages if st.stage == "deep")
+            rem_total = sum(st.duration_min for st in longest_sleep.stages if st.stage == "rem")
+            core_total = sum(st.duration_min for st in longest_sleep.stages if st.stage == "core")
+            awake_total = sum(st.duration_min for st in longest_sleep.stages if st.stage == "awake")
+        else:
+            sleep_total = deep_total = rem_total = core_total = awake_total = 0
 
         # Calculate mood average
         mood_avg = None
@@ -265,12 +280,19 @@ async def store_sync(payload: HealthSyncPayload) -> int:
                  json.dumps(m.labels), json.dumps(m.associations)),
             )
 
-        # Store sleep sessions
+        # Store sleep sessions (deduplicate by date + start_time)
+        # Attribute sleep to the wake-up date (end), since overnight sleep
+        # starting before midnight belongs to the next day
         for s in payload.sleep:
-            s_date = s.start.strftime("%Y-%m-%d")
+            s_date = s.end.strftime("%Y-%m-%d")
             await db.execute(
                 """INSERT INTO sleep_sessions (date, start_time, end_time, total_duration_min,
-                   in_bed_duration_min, stages_json) VALUES (?, ?, ?, ?, ?, ?)""",
+                   in_bed_duration_min, stages_json) VALUES (?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(date, start_time) DO UPDATE SET
+                     end_time = excluded.end_time,
+                     total_duration_min = excluded.total_duration_min,
+                     in_bed_duration_min = excluded.in_bed_duration_min,
+                     stages_json = excluded.stages_json""",
                 (s_date, s.start.isoformat(), s.end.isoformat(), s.total_duration_min,
                  s.in_bed_duration_min, json.dumps([st.model_dump(mode="json") for st in s.stages])),
             )
