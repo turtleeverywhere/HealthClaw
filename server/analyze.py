@@ -159,6 +159,25 @@ def analyze():
             print(f"- Respiratory Rate: {fmt(rr, ' breaths/min', 1)}")
         print()
 
+    # Nutrition
+    try:
+        nutrition_data = api_get("/api/nutrition/summary", {"date": date})
+        if nutrition_data.get("meal_count", 0) > 0:
+            print("## 🍽️ Nutrition (Today)")
+            cals = nutrition_data.get("total_calories", 0)
+            protein = nutrition_data.get("total_protein_g", 0)
+            carbs = nutrition_data.get("total_carbs_g", 0)
+            fat = nutrition_data.get("total_fat_g", 0)
+            meals = nutrition_data.get("meal_count", 0)
+            print(f"- Meals logged: **{meals}**")
+            print(f"- Calories: **{fmt(cals, ' kcal')}**")
+            print(f"- Protein: {fmt(protein, 'g', 1)}")
+            print(f"- Carbs: {fmt(carbs, 'g', 1)}")
+            print(f"- Fat: {fmt(fat, 'g', 1)}")
+            print()
+    except Exception:
+        pass  # Nutrition data is optional — skip if unavailable
+
     # Alerts
     alerts = []
     if rhr and rhr > 80:

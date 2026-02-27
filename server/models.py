@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel
 
 
@@ -99,3 +99,84 @@ class HealthSyncPayload(BaseModel):
     mindfulness: list[MindfulnessSession] = []
     # Synthetic body battery (0-100), computed client-side from HRV + sleep + activity
     body_battery: Optional[int] = None
+
+
+# ── Nutrition models ─────────────────────────────────────────────────
+
+class NutritionAnalysisRequest(BaseModel):
+    text: str
+    image_base64: Optional[str] = None
+    image_mime_type: Optional[str] = None  # e.g. "image/jpeg"
+
+
+class NutrientDetail(BaseModel):
+    name: str
+    amount: float
+    unit: str
+    daily_value_pct: Optional[float] = None
+
+
+class FoodItem(BaseModel):
+    name: str
+    portion: str
+    calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    fiber_g: float = 0.0
+    sugar_g: float = 0.0
+    sodium_mg: float = 0.0
+    nutrients: list[NutrientDetail] = []
+
+
+class NutritionTotals(BaseModel):
+    calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    fiber_g: float = 0.0
+    sugar_g: float = 0.0
+    sodium_mg: float = 0.0
+
+
+class NutritionAnalysisResponse(BaseModel):
+    meal_id: int
+    timestamp: datetime
+    description: str
+    food_items: list[FoodItem]
+    totals: NutritionTotals
+    healthkit_samples: list[dict[str, Any]]
+
+
+class MealUpdateRequest(BaseModel):
+    description: Optional[str] = None
+    food_items: list[FoodItem] = []
+    totals: NutritionTotals
+
+
+class NutritionHistoryEntry(BaseModel):
+    id: int
+    date: str
+    timestamp: str
+    description: str
+    total_calories: Optional[float] = None
+    total_protein_g: Optional[float] = None
+    total_carbs_g: Optional[float] = None
+    total_fat_g: Optional[float] = None
+    created_at: str
+
+
+class NutrientSummaryItem(BaseModel):
+    nutrient_name: str
+    total_amount: float
+    unit: str
+
+
+class DailyNutritionSummary(BaseModel):
+    date: str
+    meal_count: int
+    total_calories: float
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    nutrients: list[NutrientSummaryItem] = []

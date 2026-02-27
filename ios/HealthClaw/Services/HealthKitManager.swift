@@ -70,14 +70,96 @@ class HealthKitManager: ObservableObject {
         return types
     }
 
+    /// Quantity types the app requests WRITE permission for (dietary logging)
+    private var writeTypes: Set<HKSampleType> {
+        let ids: [HKQuantityTypeIdentifier] = [
+            .dietaryEnergyConsumed,
+            .dietaryProtein,
+            .dietaryCarbohydrates,
+            .dietaryFatTotal,
+            .dietaryFatSaturated,
+            .dietaryFiber,
+            .dietarySugar,
+            .dietarySodium,
+            .dietaryCholesterol,
+            .dietaryCalcium,
+            .dietaryIron,
+            .dietaryVitaminC,
+            .dietaryVitaminD,
+            .dietaryPotassium,
+            .dietaryMagnesium,
+            .dietaryVitaminA,
+            .dietaryVitaminB6,
+            .dietaryVitaminB12,
+            .dietaryFolate,
+            .dietaryZinc,
+        ]
+        return Set(ids.compactMap { HKQuantityType.quantityType(forIdentifier: $0) })
+    }
+
     func requestAuthorization() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         do {
-            try await store.requestAuthorization(toShare: [], read: readTypes)
+            try await store.requestAuthorization(toShare: writeTypes, read: readTypes)
             isAuthorized = true
         } catch {
             print("HealthKit auth error: \(error)")
         }
+    }
+
+    /// Read today's dietary totals from HealthKit (source of truth).
+    func fetchDietaryTotals(for date: Date) async -> DailyNutritionSummary? {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: date)
+        guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return nil }
+
+        let kcal = await sumQuantity(.dietaryEnergyConsumed, unit: .kilocalorie(), from: start, to: end)
+        let protein = await sumQuantity(.dietaryProtein, unit: .gram(), from: start, to: end)
+        let carbs = await sumQuantity(.dietaryCarbohydrates, unit: .gram(), from: start, to: end)
+        let fat = await sumQuantity(.dietaryFatTotal, unit: .gram(), from: start, to: end)
+
+        // Count distinct dietary energy samples as meal count proxy
+        let mealCount = await countSamples(.dietaryEnergyConsumed, from: start, to: end)
+
+        let dateStr = {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd"
+            return f.string(from: date)
+        }()
+
+        return DailyNutritionSummary(
+            date: dateStr,
+            mealCount: mealCount,
+            totalCalories: kcal,
+            totalProteinG: protein,
+            totalCarbsG: carbs,
+            totalFatG: fat
+        )
+    }
+
+    private func countSamples(_ identifier: HKQuantityTypeIdentifier, from start: Date, to end: Date) async -> Int {
+        guard let type = HKQuantityType.quantityType(forIdentifier: identifier) else { return 0 }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
+        return await withCheckedContinuation { cont in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+                cont.resume(returning: samples?.count ?? 0)
+            }
+            store.execute(query)
+        }
+    }
+
+    /// Write a single dietary quantity sample to HealthKit.
+    func writeDietarySample(
+        identifier: HKQuantityTypeIdentifier,
+        value: Double,
+        unit: HKUnit,
+        date: Date
+    ) async throws {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard let quantityType = HKQuantityType.quantityType(forIdentifier: identifier) else { return }
+        let quantity = HKQuantity(unit: unit, doubleValue: value)
+        let sample = HKQuantitySample(type: quantityType, quantity: quantity, start: date, end: date)
+        try await store.save(sample)
     }
 
     // MARK: - Collect all data for a time range

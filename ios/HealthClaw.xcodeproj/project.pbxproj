@@ -27,6 +27,10 @@
 		F570E7229D0D6CB116234A95 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4282E9777E0D514885060FF1 /* Theme.swift */; };
 		FAE021E44AB4D0B0A0C85D8F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B806AAED77C72F5D50D516 /* SettingsView.swift */; };
 		FBADA18C2D7422CC52CF23FF /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6870F98EDFC49F41817F62 /* MainTabView.swift */; };
+		EE5F6A7B8C9D0E1F2A3B4C5D /* NutritionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F6A7B8C9D0E1F /* NutritionData.swift */; };
+		FF6A7B8C9D0E1F2A3B4C5D6E /* NutritionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* NutritionManager.swift */; };
+		AA7B8C9D0E1F2A3B4C5D6E7F /* NutritionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D4E5F6A7B8C9D0E1F2A3B /* NutritionService.swift */; };
+		BB8C9D0E1F2A3B4C5D6E7F8A /* NutritionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* NutritionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +82,10 @@
 		EA2BABAE6A1A14BD8734D72B /* HealthClaw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthClaw.entitlements; sourceTree = "<group>"; };
 		F6629ADC631BD992118F25ED /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		FC7AF2E6F4888032E20B9817 /* WidgetProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetProvider.swift; sourceTree = "<group>"; };
+		AA1B2C3D4E5F6A7B8C9D0E1F /* NutritionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionData.swift; sourceTree = "<group>"; };
+		BB2C3D4E5F6A7B8C9D0E1F2A /* NutritionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionManager.swift; sourceTree = "<group>"; };
+		CC3D4E5F6A7B8C9D0E1F2A3B /* NutritionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionService.swift; sourceTree = "<group>"; };
+		DD4E5F6A7B8C9D0E1F2A3B4C /* NutritionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -119,6 +127,8 @@
 			children = (
 				C0CF38B646E9C507EEA0E1C4 /* AppSettings.swift */,
 				DF930C62C83A23227B472195 /* HealthKitManager.swift */,
+				BB2C3D4E5F6A7B8C9D0E1F2A /* NutritionManager.swift */,
+				CC3D4E5F6A7B8C9D0E1F2A3B /* NutritionService.swift */,
 				5A3592035BEDCA2D5B3D744A /* SyncManager.swift */,
 			);
 			path = Services;
@@ -147,6 +157,7 @@
 			children = (
 				1F1E2905991F619C642F90AE /* DashboardView.swift */,
 				DD6870F98EDFC49F41817F62 /* MainTabView.swift */,
+				DD4E5F6A7B8C9D0E1F2A3B4C /* NutritionView.swift */,
 				A7B806AAED77C72F5D50D516 /* SettingsView.swift */,
 				85846D6A020EFFCA436A8CC5 /* SleepView.swift */,
 				26EDC0559944C21921C67A0C /* WorkoutsView.swift */,
@@ -171,6 +182,7 @@
 			isa = PBXGroup;
 			children = (
 				684BD1E78DC39148D87C6312 /* HealthData.swift */,
+				AA1B2C3D4E5F6A7B8C9D0E1F /* NutritionData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -286,6 +298,10 @@
 				D34E8C6E08CAB20D4CCF7B70 /* HealthData.swift in Sources */,
 				9C43E959251B3E60A5CBD136 /* HealthKitManager.swift in Sources */,
 				FBADA18C2D7422CC52CF23FF /* MainTabView.swift in Sources */,
+				EE5F6A7B8C9D0E1F2A3B4C5D /* NutritionData.swift in Sources */,
+				FF6A7B8C9D0E1F2A3B4C5D6E /* NutritionManager.swift in Sources */,
+				AA7B8C9D0E1F2A3B4C5D6E7F /* NutritionService.swift in Sources */,
+				BB8C9D0E1F2A3B4C5D6E7F8A /* NutritionView.swift in Sources */,
 				FAE021E44AB4D0B0A0C85D8F /* SettingsView.swift in Sources */,
 				9FE54577885F51B1BB1D2BA0 /* SleepView.swift in Sources */,
 				1F17CEDC720EADEEC0668FF2 /* SyncManager.swift in Sources */,
