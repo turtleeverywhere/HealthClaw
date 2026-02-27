@@ -160,7 +160,7 @@ struct DashboardView: View {
         SectionHeader(title: "Activity")
 
         if let activity = healthManager.todayActivity {
-            ActivityCard(activity: activity, stepHistory: healthManager.historicalSteps.map(\.value))
+            ActivityCard(activity: activity, stepMetrics: healthManager.historicalSteps)
         }
 
         SectionHeader(title: "Sleep")
@@ -700,7 +700,9 @@ struct VitalTile: View {
 
 struct ActivityCard: View {
     let activity: ActivityData
-    let stepHistory: [Double]
+    let stepMetrics: [DailyMetric]
+
+    private var stepHistory: [Double] { stepMetrics.map(\.value) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -713,8 +715,12 @@ struct ActivityCard: View {
 
             // Step sparkline
             if stepHistory.count >= 2 {
-                SparklineView(data: stepHistory, color: .green)
-                    .frame(height: 50)
+                VStack(spacing: 4) {
+                    SparklineView(data: stepHistory, color: .green)
+                        .frame(height: 50)
+                    SparklineXAxis(dates: stepMetrics.map(\.date))
+                        .frame(height: 14)
+                }
             }
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {

@@ -68,6 +68,54 @@ struct SparklineView: View {
     }
 }
 
+// MARK: - Sparkline X-Axis
+
+struct SparklineXAxis: View {
+    let dates: [Date]
+    var maxLabels: Int = 5
+
+    var body: some View {
+        let indices = labelIndices
+        GeometryReader { geo in
+            let pad: CGFloat = 6
+            let w = geo.size.width - pad * 2
+            let count = dates.count
+            ForEach(indices, id: \.self) { i in
+                let x = pad + w * CGFloat(i) / CGFloat(max(count - 1, 1))
+                Text(formatDate(dates[i]))
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+                    .position(x: x, y: geo.size.height / 2)
+            }
+        }
+    }
+
+    private var labelIndices: [Int] {
+        guard dates.count >= 2 else { return dates.isEmpty ? [] : [0] }
+        let count = dates.count
+        let labels = min(maxLabels, count)
+        if labels <= 2 { return [0, count - 1] }
+        return (0..<labels).map { i in
+            Int(round(Double(i) * Double(count - 1) / Double(labels - 1)))
+        }
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        let cal = Calendar.current
+        let span = dates.last.flatMap { cal.dateComponents([.day], from: dates.first ?? date, to: $0).day } ?? 0
+        if span <= 1 {
+            fmt.dateFormat = "HH:mm"
+        } else if span <= 31 {
+            fmt.dateFormat = "d MMM"
+        } else {
+            fmt.dateFormat = "MMM"
+        }
+        return fmt.string(from: date)
+    }
+}
+
 // MARK: - Circular Progress Gauge
 
 struct CircularGaugeView: View {
